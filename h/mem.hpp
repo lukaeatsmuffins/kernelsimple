@@ -60,8 +60,10 @@ class MemoryAllocator {
     MemoryAllocator() = default;
     MemoryAllocator(const MemoryAllocator &) = delete;
     MemoryAllocator &operator=(const MemoryAllocator &) = delete;
-}
 
-void *mem_alloc(size_t size);
+    // Consolidates adjacent free blocks. Assumes that the block is already
+    // been freed.
+    void maybe_consolidate(BlockInfo* block_info);
+}
 
 #endif // MEM_HPP
