@@ -51,8 +51,7 @@ class MemoryAllocator {
 
     size_t free_space_ = 0;
 
-    // Singleton instance pointer
-    static MemoryAllocator* instance_;
+    // No global singleton instance pointer; implemented with function-local static in getInstance()
 
     // Block info header size.
     static constexpr uint64 BLOCK_INFO_HEADER_SIZE = 5 * sizeof(uint64);

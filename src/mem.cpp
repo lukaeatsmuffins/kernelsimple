@@ -1,8 +1,7 @@
 #include "../h/mem.hpp"
 
-MemoryAllocator* MemoryAllocator::instance_ = nullptr;
-
 MemoryAllocator *MemoryAllocator::getInstance() {
+    static MemoryAllocator* instance_ = nullptr;
     if (!instance_) {
         // Initialize the instance of the MemoryAllocator.
         instance_ = (MemoryAllocator*)HEAP_START_ADDR;
