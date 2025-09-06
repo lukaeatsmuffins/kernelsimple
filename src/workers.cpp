@@ -1,6 +1,7 @@
 #include "../lib/hw.h"
 #include "../h/tcb.hpp"
 #include "../h/print.hpp"
+#include "../h/syscall_c.hpp"
 
 void worker_ecall() {
     printString("Starting ecall worker\n");
@@ -115,4 +116,25 @@ void workerBodyD()
         printString("\n");
     }
 //    TCB::yield();
+}
+
+void workerTest()
+{
+    printString("--------------------------------\n");
+    printString("Starting test\n");
+    printString("--------------------------------\n");
+
+    printString("Test\n");
+    void* ptr = mem_alloc(1024);
+    printString("ptr=");
+    printInteger((uint64)ptr);
+    printString("\n");
+
+    mem_free(ptr);
+    printString("ptr freed\n");
+
+    printString("--------------------------------\n");
+    printString("Test finished\n");
+    printString("--------------------------------\n");
+
 }

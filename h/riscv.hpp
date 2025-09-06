@@ -7,6 +7,9 @@
 
 #include "../lib/hw.h"
 
+extern const size_t DEFAULT_STACK_SIZE;
+extern const time_t DEFAULT_TIME_SLICE;
+
 class Riscv
 {
 public:

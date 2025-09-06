@@ -10,7 +10,7 @@ MemoryAllocator* MemoryAllocator::getInstance() {
 
         // Initialize the rest of the allocator fields.
         // First free block is after the allocator, aligned to MEM_BLOCK_SIZE.
-        instance_->free_block_ptr_ =  (BlockInfo*)(
+        instance_->free_block_ptr_ = (BlockInfo*)(
             (uint64)instance_+ 
             ((sizeof(MemoryAllocator) + MEM_BLOCK_SIZE - 1) 
             & ~(MEM_BLOCK_SIZE - 1)));

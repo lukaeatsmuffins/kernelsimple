@@ -5,6 +5,8 @@
 #include "../h/riscv.hpp"
 #include "../h/tcb.hpp"
 #include "../lib/console.h"
+#include "../h/syscall_c.hpp"
+#include "../h/mem.hpp"
 
 void Riscv::popSppSpie()
 {
@@ -14,14 +16,81 @@ void Riscv::popSppSpie()
 
 void Riscv::handleSupervisorTrap()
 {
+
     uint64 scause = r_scause();
     if (scause == 0x0000000000000008UL || scause == 0x0000000000000009UL)
     {
         // interrupt: no; cause code: environment call from U-mode(8) or S-mode(9)
         uint64 volatile sepc = r_sepc() + 4;
         uint64 volatile sstatus = r_sstatus();
-        TCB::timeSliceCounter = 0;
-        TCB::dispatch();
+
+        uint64 a0, a1, a2, a3, a4, a5, a6, a7;
+        __asm__ volatile ("mv %0, a0" : "=r"(a0));
+        __asm__ volatile ("mv %0, a1" : "=r"(a1));
+        __asm__ volatile ("mv %0, a2" : "=r"(a2));
+        __asm__ volatile ("mv %0, a3" : "=r"(a3));
+        __asm__ volatile ("mv %0, a4" : "=r"(a4));
+        __asm__ volatile ("mv %0, a5" : "=r"(a5));
+        __asm__ volatile ("mv %0, a6" : "=r"(a6));
+        __asm__ volatile ("mv %0, a7" : "=r"(a7));
+
+        debug_print("--------------------------------\n");
+        debug_print("SYSCALL!\n");
+        debug_print("a0=");
+        debug_print(a0);
+        debug_print("\n");
+        debug_print("a1=");
+        debug_print(a1);
+        debug_print("\n");
+        debug_print("a2=");
+        debug_print(a2);
+        debug_print("\n");
+        debug_print("a3=");
+        debug_print(a3);
+        debug_print("\n");
+        debug_print("a4=");
+        debug_print(a4);
+        debug_print("\n");
+        debug_print("a5=");
+        debug_print(a5);
+        debug_print("\n");
+        debug_print("a6=");
+        debug_print(a6);
+        debug_print("\n");
+        debug_print("a7=");
+        debug_print(a7);
+        debug_print("\n");
+        debug_print("--------------------------------\n");
+
+        uint64 res = 0;
+        switch (a0) {
+            case SyscallCode::MEM_ALLOC:
+                debug_print("MEM_ALLOC SYSCALL\n");
+
+                res = (uint64)MemoryAllocator::getInstance()->mem_alloc(a1);
+                break;
+            case SyscallCode::MEM_FREE:
+                debug_print("MEM_FREE SYSCALL\n");
+
+                res = MemoryAllocator::getInstance()->mem_free((void*)a1);
+                break;
+            case SyscallCode::MEM_GET_FREE_SPACE:
+                MemoryAllocator::getInstance()->mem_get_free_space();
+                break;
+            case SyscallCode::MEM_GET_LARGEST_FREE_BLOCK:
+                MemoryAllocator::getInstance()->mem_get_largest_free_block();
+                break;
+        }
+        __asm__ volatile ("mv a0, %0" : : "r"(res));
+
+        // Overwrite a0 with the result from the syscall.
+        __asm__ volatile ("sd %0, 10*8(x8)" : : "r"(res));
+
+        debug_print("res=");
+        debug_print(res);
+        debug_print("\n");
+        debug_print("--------------------------------\n");
+
         w_sstatus(sstatus);
         w_sepc(sepc);
     }

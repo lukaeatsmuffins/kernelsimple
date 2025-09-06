@@ -3,6 +3,8 @@
 
 void worker_ecall();
 
+extern void workerTest();
+
 extern void workerBodyA();
 
 extern void workerBodyB();
