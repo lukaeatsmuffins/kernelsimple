@@ -32,29 +32,30 @@ class MemoryAllocator {
     size_t mem_get_largest_free_block();
 
     private:
-    static MemoryAllocator instance_* = nullptr;
+    // Inline information stored on the free block
+    struct BlockInfo {
+        // Pointer to the previous block.
+        BlockInfo* prev_;
+        // Pointer to the next block.
+        BlockInfo* next_;
+        // Pointer to the next free block.
+        BlockInfo* next_free_;
+        // Pointer to the next used block.
+        BlockInfo* prev_free_;
+        // Size of the block.
+        uint64 size_;
+    };
 
     // Pointer to the first free block.
     BlockInfo* free_block_ptr_ = nullptr;
 
     size_t free_space_ = 0;
 
-    // Inline information stored on the free block
-    struct BlockInfo {
-        // Pointer to the previous block.
-        void* prev_;
-        // Pointer to the next block.
-        void* next_;
-        // Pointer to the next free block.
-        void* next_free_;
-        // Pointer to the next used block.
-        void* prev_free_;
-        // Size of the block.
-        uint64 size_;
-    };
+    // Singleton instance pointer
+    static MemoryAllocator* instance_;
 
     // Block info header size.
-    static uint64 BLOCK_INFO_HEADER_SIZE = 5 * sizeof(uint64);
+    static constexpr uint64 BLOCK_INFO_HEADER_SIZE = 5 * sizeof(uint64);
 
     // Private constructor and assignment operator to prevent copying
     MemoryAllocator() = default;
@@ -64,6 +65,6 @@ class MemoryAllocator {
     // Consolidates adjacent free blocks. Assumes that the block is already
     // been freed.
     void maybe_consolidate(BlockInfo* block_info);
-}
+};
 
 #endif // MEM_HPP

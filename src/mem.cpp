@@ -1,36 +1,39 @@
 #include "../h/mem.hpp"
 
-static MemoryAllocator *MemoryAllocator::get_instance() {
-    if (!instance) {
+MemoryAllocator* MemoryAllocator::instance_ = nullptr;
+
+MemoryAllocator *MemoryAllocator::getInstance() {
+    if (!instance_) {
         // Initialize the instance of the MemoryAllocator.
         instance_ = (MemoryAllocator*)HEAP_START_ADDR;
 
         // Initialize the rest of the allocator fields.
         // First free block is after the allocator, aligned to MEM_BLOCK_SIZE.
-        instance_->free_block_ptr_ = 
-            HEAP_START_ADDR + 
-            ((sizeof(MemoryAllocator) + MEM_BLOCK_SIZE - 1) 
-            & ~(MEM_BLOCK_SIZE - 1));
+        uint64 allocator_start = (uint64)HEAP_START_ADDR;
+        uint64 allocator_size_rounded = (sizeof(MemoryAllocator) + (MEM_BLOCK_SIZE - 1)) & ~(MEM_BLOCK_SIZE - 1);
+        instance_->free_block_ptr_ = (MemoryAllocator::BlockInfo*)(allocator_start + allocator_size_rounded);
 
         // Remaining is left as free space.
-        instance_->free_space_ = 
-            (void*)HEAP_END_ADDR - instance_->free_block_ptr_;
+        instance_->free_space_ = (size_t)((uint64)HEAP_END_ADDR - (uint64)instance_->free_block_ptr_);
 
         // The first free block should contain all of the remaining memory.
+        instance_->free_block_ptr_->prev_ = nullptr;
         instance_->free_block_ptr_->next_ = nullptr;
+        instance_->free_block_ptr_->prev_free_ = nullptr;
+        instance_->free_block_ptr_->next_free_ = nullptr;
         instance_->free_block_ptr_->size_ = instance_->free_space_;
 
         debug_print("MemoryAllocator initialized with:\n");
         debug_print("MEM_BLOCK_SIZE: ");
         debug_print(MEM_BLOCK_SIZE);
         debug_print("\nHEAP_START_ADDR: ");
-        debug_print(HEAP_START_ADDR);
+        debug_print((uint64)HEAP_START_ADDR);
         debug_print("\nHEAP_END_ADDR: ");
-        debug_print(HEAP_END_ADDR);
+        debug_print((uint64)HEAP_END_ADDR);
         debug_print("\nFirst free block pointer: ");
-        debug_print(instance_->free_block_ptr_);
+        debug_print((uint64)instance_->free_block_ptr_);
         debug_print("\nTotal free space: ");
-        debug_print(instance_->free_space_);
+        debug_print((uint64)instance_->free_space_);
     }
     return instance_;
 }
@@ -46,7 +49,7 @@ void* MemoryAllocator::mem_alloc (size_t size) {
     size = (size + BLOCK_INFO_HEADER_SIZE + MEM_BLOCK_SIZE - 1) 
            & ~(MEM_BLOCK_SIZE - 1);
 
-    void* free_block_iter = free_block_ptr_;
+    BlockInfo* free_block_iter = free_block_ptr_;
 
 
     while (free_block_iter != nullptr) {
@@ -140,7 +143,7 @@ int MemoryAllocator::mem_free (void* free_block_addr) {
         return -1;
     }
 
-    if ((uint64)block_info < HEAP_START_ADDR || (uint64)block_info >= HEAP_END_ADDR) {
+    if ((uint64)block_info < (uint64)HEAP_START_ADDR || (uint64)block_info >= (uint64)HEAP_END_ADDR) {
         debug_print("Free block address is not in the heap.");
         return -1;
     }
@@ -162,9 +165,9 @@ int MemoryAllocator::mem_free (void* free_block_addr) {
 
     // We also need to update the prev_ and next_ blocks' free list pointers.
     // They should already be pointing back to us.
-    assert(block_info->prev_->next == block_info, 
+    assert(block_info->prev_->next_ == block_info, 
           "prev_ is not pointing to the block");
-    assert(block_info->next_->prev == block_info, 
+    assert(block_info->next_->prev_ == block_info, 
           "next_ is not pointing to the block");
 
     if (block_info->prev_) {
