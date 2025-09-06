@@ -21,6 +21,7 @@ void Riscv::handleSupervisorTrap()
     if (scause == 0x0000000000000008UL || scause == 0x0000000000000009UL)
     {
         // interrupt: no; cause code: environment call from U-mode(8) or S-mode(9)
+        // Should be triggered on syscall.
         uint64 volatile sepc = r_sepc() + 4;
         uint64 volatile sstatus = r_sstatus();
 
@@ -34,44 +35,12 @@ void Riscv::handleSupervisorTrap()
         __asm__ volatile ("mv %0, a6" : "=r"(a6));
         __asm__ volatile ("mv %0, a7" : "=r"(a7));
 
-        debug_print("--------------------------------\n");
-        debug_print("SYSCALL!\n");
-        debug_print("a0=");
-        debug_print(a0);
-        debug_print("\n");
-        debug_print("a1=");
-        debug_print(a1);
-        debug_print("\n");
-        debug_print("a2=");
-        debug_print(a2);
-        debug_print("\n");
-        debug_print("a3=");
-        debug_print(a3);
-        debug_print("\n");
-        debug_print("a4=");
-        debug_print(a4);
-        debug_print("\n");
-        debug_print("a5=");
-        debug_print(a5);
-        debug_print("\n");
-        debug_print("a6=");
-        debug_print(a6);
-        debug_print("\n");
-        debug_print("a7=");
-        debug_print(a7);
-        debug_print("\n");
-        debug_print("--------------------------------\n");
-
         uint64 res = 0;
         switch (a0) {
             case SyscallCode::MEM_ALLOC:
-                debug_print("MEM_ALLOC SYSCALL\n");
-
                 res = (uint64)MemoryAllocator::getInstance()->mem_alloc(a1);
                 break;
             case SyscallCode::MEM_FREE:
-                debug_print("MEM_FREE SYSCALL\n");
-
                 res = MemoryAllocator::getInstance()->mem_free((void*)a1);
                 break;
             case SyscallCode::MEM_GET_FREE_SPACE:
@@ -85,11 +54,6 @@ void Riscv::handleSupervisorTrap()
 
         // Overwrite a0 with the result from the syscall.
         __asm__ volatile ("sd %0, 10*8(x8)" : : "r"(res));
-
-        debug_print("res=");
-        debug_print(res);
-        debug_print("\n");
-        debug_print("--------------------------------\n");
 
         w_sstatus(sstatus);
         w_sepc(sepc);
