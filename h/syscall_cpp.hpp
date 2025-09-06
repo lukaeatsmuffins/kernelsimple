@@ -1,39 +1,103 @@
+#ifndef OS1_SYSCALL_CPP_HPP 
+#define OS1_SYSCALL_CPP_HPP 
+
+#include "../lib/hw.h"
+#include "tcb.hpp"
+
+// TODO: Move _new.cpp to this file
+
 class Thread {
     public:
-    Thread (void (*body)(void*), void* arg);
-    virtual ~Thread ();
-    int start ();
-    static void dispatch ();
-    static int sleep (time_t);
+    Thread(void (*body)(void*), void* arg) : body(body), arg(arg) {
+        if(thread_create(&myHandle, this->run, this) != 0) {
+            myHandle = nullptr;
+        }
+    }
+    virtual ~Thread() {
+        // Wait for the thread to finish.
+        while (!myHandle->isFinished()) {
+            myHandle->yield();
+        }
+    }
+    int start() {
+        // TODO: Should we first initialize the thread without it starting?
+        // The current implementation of TCB doesn't allow for this.
+        // return myHandle->start();
+    }
+    static void dispatch() {
+        myHandle->yield();
+    }
+    // static int sleep(time_t);
+
     protected:
-    Thread ();
-    virtual void run () {}
+    Thread();
+    // TODO: Where should run be called and what should it do?
+    virtual void run() {
+        body(arg);
+    }
+
     private:
     thread_t myHandle;
-    void (*body)(void*); void* arg;
-    };
-    class Semaphore {
+    void (*body)(void*);
+    void* arg;
+};
+
+class Semaphore {
     public:
-    Semaphore (unsigned init = 1);
-    virtual ~Semaphore ();
-    int wait ();
-    int signal ();
+    Semaphore(unsigned init = 1) {
+        if (sem_open(&myHandle, init) != 0) {
+            myHandle = nullptr;
+        }
+    }
+    virtual ~Semaphore() {
+        if (myHandle != nullptr) {
+            sem_close(myHandle);
+        }
+    }
+    int wait() {
+        if (myHandle == nullptr) {
+            return -1;
+        }
+        return sem_wait(myHandle);
+    }
+    int signal() {
+        if (myHandle == nullptr) {
+            return -1;
+        }
+        return sem_signal(myHandle);
+    }
+
     private:
     sem_t myHandle;
-    };
-    class PeriodicThread : public Thread {
-    public:
-    void terminate ();
-    protected:
+};
 
-    PeriodicThread (time_t period);
-    virtual void periodicActivation () {}
+class PeriodicThread : public Thread {
+    public:
+    void terminate() {
+        thread_exit();
+    }
+
+    protected:
+    // TODO: Make sure this doesn't create two threads.
+    PeriodicThread(time_t period) : period(period) {}
+    virtual void run() override {
+        while (true) {
+            periodicActivation();
+        }
+    }
+    virtual void periodicActivation() {
+        body(arg);
+        time_sleep(period);
+    }
+
     private:
     time_t period;
-    };
-
-class Console {
-    public:
-    static char getc ();
-    static void putc (char);
 };
+
+// class Console {
+//     public:
+//     static char getc();
+//     static void putc(char);
+// };
+
+#endif // OS1_SYSCALL_CPP_HPP
