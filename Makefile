@@ -2,15 +2,15 @@ DIR_BUILD = build
 DIR_LIBS  = lib
 DIR_INC   = h
 
-DEBUG_FLAG = -D DEBUG_PRINT=0
+DEBUG_FLAG = -D DEBUG_PRINT=1
 
 KERNEL_IMG = kernel
 KERNEL_ASM = kernel.asm
 
 LIBS = \
   ${DIR_LIBS}/hw.lib \
-  ${DIR_LIBS}/mem.lib \
   ${DIR_LIBS}/console.lib
+#   ${DIR_LIBS}/mem.lib \
 
 # riscv64-unknown-elf- or riscv64-linux-gnu-
 # perhaps in /opt/riscv/bin

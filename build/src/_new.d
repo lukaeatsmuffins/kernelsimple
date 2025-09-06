@@ -1,5 +1,8 @@
-build/src/_new.o: src/_new.cpp src/../lib/mem.h src/../lib/hw.h
+build/src/_new.o: src/_new.cpp src/../h/mem.hpp src/../h/../lib/hw.h \
+ src/../h/print.hpp
 
-src/../lib/mem.h:
+src/../h/mem.hpp:
 
-src/../lib/hw.h:
+src/../h/../lib/hw.h:
+
+src/../h/print.hpp:

@@ -11,6 +11,7 @@ int main()
 {
     TCB *threads[5];
 
+    debug_print("Main thread created\n");
     threads[0] = TCB::createThread(nullptr);
     TCB::running = threads[0];
 

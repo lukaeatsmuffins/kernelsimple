@@ -14,14 +14,14 @@ void printString(char const *string)
     Riscv::ms_sstatus(sstatus & Riscv::SSTATUS_SIE ? Riscv::SSTATUS_SIE : 0);
 }
 
-void debug_print(int64 integer) {
-    #ifdef DEBUG_PRINT == 1
-    printString(integer);
+void debug_print(uint64 integer) {
+    #if DEBUG_PRINT == 1
+    printInteger(integer);
     #endif
 }
 
 void debug_print(char const *string) {
-    #ifdef DEBUG_PRINT == 1
+    #if DEBUG_PRINT == 1
     printString(string);
     #endif
 }
