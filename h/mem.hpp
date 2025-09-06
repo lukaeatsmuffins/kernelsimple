@@ -3,7 +3,8 @@
 
 #include "../lib/hw.h"
 
-extern const void* HEAP_START_ADDR, HEAP_END_ADDR;
+extern const void* HEAP_START_ADDR;
+extern const void* HEAP_END_ADDR;
 extern const size_t MEM_BLOCK_SIZE;
 
 // Singleton class that manages the heap memory.
@@ -32,38 +33,39 @@ class MemoryAllocator {
     size_t mem_get_largest_free_block();
 
     private:
-    static MemoryAllocator instance_* = nullptr;
-
-    // Pointer to the first free block.
-    BlockInfo* free_block_ptr_ = nullptr;
-
-    size_t free_space_ = 0;
-
-    // Inline information stored on the free block
     struct BlockInfo {
-        // Pointer to the previous block.
-        void* prev_;
-        // Pointer to the next block.
-        void* next_;
-        // Pointer to the next free block.
-        void* next_free_;
-        // Pointer to the next used block.
-        void* prev_free_;
-        // Size of the block.
-        uint64 size_;
+        // Previous physical neighbor block.
+        struct BlockInfo* prev_;
+        // Next physical neighbor block.
+        struct BlockInfo* next_;
+        // Previous block in the free list (by address order).
+        struct BlockInfo* prev_free_;
+        // Next block in the free list (by address order).
+        struct BlockInfo* next_free_;
+        // Total size of this block including header, in bytes.
+        size_t size_;
     };
 
-    // Block info header size.
-    static uint64 BLOCK_INFO_HEADER_SIZE = 5 * sizeof(uint64);
+    // Pointer to singleton instance (lives at HEAP_START_ADDR).
+    static MemoryAllocator* instance_;
+
+    // Pointer to the head of the free list.
+    BlockInfo* free_block_ptr_ = nullptr;
+
+    // Total free space in bytes (sum of sizes of all free blocks).
+    size_t free_space_ = 0;
+
+    // Block header size.
+    static constexpr size_t BLOCK_INFO_HEADER_SIZE = sizeof(BlockInfo);
 
     // Private constructor and assignment operator to prevent copying
     MemoryAllocator() = default;
     MemoryAllocator(const MemoryAllocator &) = delete;
     MemoryAllocator &operator=(const MemoryAllocator &) = delete;
 
-    // Consolidates adjacent free blocks. Assumes that the block is already
-    // been freed.
-    void maybe_consolidate(BlockInfo* block_info);
-}
+    // Consolidates adjacent free blocks around block_info. Assumes block_info
+    // is linked into the free list.
+    void maybe_consolidate(struct BlockInfo* block_info);
+};
 
 #endif // MEM_HPP

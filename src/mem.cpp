@@ -1,230 +1,192 @@
 #include "../h/mem.hpp"
 
-static MemoryAllocator *MemoryAllocator::get_instance() {
-    if (!instance) {
-        // Initialize the instance of the MemoryAllocator.
-        instance_ = (MemoryAllocator*)HEAP_START_ADDR;
+// Singleton instance storage pointer
+MemoryAllocator* MemoryAllocator::instance_ = nullptr;
 
-        // Initialize the rest of the allocator fields.
-        // First free block is after the allocator, aligned to MEM_BLOCK_SIZE.
-        instance_->free_block_ptr_ = 
-            HEAP_START_ADDR + 
-            ((sizeof(MemoryAllocator) + MEM_BLOCK_SIZE - 1) 
-            & ~(MEM_BLOCK_SIZE - 1));
+static inline uint64 align_up(uint64 value, uint64 alignment) {
+    return (value + alignment - 1) & ~(alignment - 1);
+}
 
-        // Remaining is left as free space.
-        instance_->free_space_ = 
-            (void*)HEAP_END_ADDR - instance_->free_block_ptr_;
+static inline uint64 align_down(uint64 value, uint64 alignment) {
+    return value & ~(alignment - 1);
+}
 
-        // The first free block should contain all of the remaining memory.
-        instance_->free_block_ptr_->next_ = nullptr;
-        instance_->free_block_ptr_->size_ = instance_->free_space_;
+MemoryAllocator* MemoryAllocator::getInstance() {
+    if (!instance_) {
+        // Place the allocator object at the start of the heap
+        instance_ = reinterpret_cast<MemoryAllocator*>(
+            const_cast<void*>(HEAP_START_ADDR));
+        // Value-initialize the object in-place
+        new (instance_) MemoryAllocator();
 
-        debug_print("MemoryAllocator initialized with:\n");
-        debug_print("MEM_BLOCK_SIZE: ");
-        debug_print(MEM_BLOCK_SIZE);
-        debug_print("\nHEAP_START_ADDR: ");
-        debug_print(HEAP_START_ADDR);
-        debug_print("\nHEAP_END_ADDR: ");
-        debug_print(HEAP_END_ADDR);
-        debug_print("\nFirst free block pointer: ");
-        debug_print(instance_->free_block_ptr_);
-        debug_print("\nTotal free space: ");
-        debug_print(instance_->free_space_);
+        // Compute the first free block start address aligned to MEM_BLOCK_SIZE
+        uint64 start_addr = reinterpret_cast<uint64>(HEAP_START_ADDR);
+        uint64 end_addr   = reinterpret_cast<uint64>(HEAP_END_ADDR);
+
+        uint64 first_free_addr = align_up(start_addr + sizeof(MemoryAllocator),
+                                          MEM_BLOCK_SIZE);
+        uint64 total_free = (end_addr > first_free_addr) ?
+                            (end_addr - first_free_addr) : 0;
+        total_free = align_down(total_free, MEM_BLOCK_SIZE);
+
+        instance_->free_space_ = total_free;
+
+        // Initialize the single free block spanning the entire remaining heap
+        instance_->free_block_ptr_ =
+            reinterpret_cast<BlockInfo*>(first_free_addr);
+        BlockInfo* head = instance_->free_block_ptr_;
+        head->prev_ = nullptr;
+        head->next_ = nullptr;
+        head->prev_free_ = nullptr;
+        head->next_free_ = nullptr;
+        head->size_ = total_free;
     }
     return instance_;
 }
 
-void* MemoryAllocator::mem_alloc (size_t size) {
+void* MemoryAllocator::mem_alloc(size_t size) {
+    if (size == 0) return nullptr;
+    if (free_block_ptr_ == nullptr) return nullptr;
 
-    // There is no free block, we cannot allocate more memory.
-    if (free_block_ptr_ == nullptr) {
-        return nullptr;
-    }
+    // Compute total size including header and alignment
+    size_t needed = align_up(size + BLOCK_INFO_HEADER_SIZE, MEM_BLOCK_SIZE);
 
-    // Align size to MEM_BLOCK_SIZE.
-    size = (size + BLOCK_INFO_HEADER_SIZE + MEM_BLOCK_SIZE - 1) 
-           & ~(MEM_BLOCK_SIZE - 1);
+    BlockInfo* prev_free = nullptr;
+    BlockInfo* cur = free_block_ptr_;
 
-    void* free_block_iter = free_block_ptr_;
+    while (cur) {
+        if (cur->size_ == needed ||
+            (cur->size_ > needed &&
+             (cur->size_ - needed) < (BLOCK_INFO_HEADER_SIZE + MEM_BLOCK_SIZE))) {
+            // Use the whole block if exact match or leftover would be too small
+            if (prev_free) {
+                prev_free->next_free_ = cur->next_free_;
+            } else {
+                free_block_ptr_ = cur->next_free_;
+            }
+            if (cur->next_free_) cur->next_free_->prev_free_ = prev_free;
 
+            // Detach from free list
+            cur->prev_free_ = nullptr;
+            cur->next_free_ = nullptr;
 
-    while (free_block_iter != nullptr) {
-        // If we found the same size block, we just need to unlink from the free
-        // list. We keep the prev_free_ and next_free_ pointers. They will be
-        // used when freeing the block.
-        if (free_block_iter->size_ == size) {
-            free_space_ -= size;
-            free_block_iter->next_free_->prev_free_ = 
-                free_block_iter->prev_free_;
-            free_block_iter->prev_free_->next_free_ = 
-                free_block_iter->next_free_;
-            
-
-            return (void*)((uint64)free_block_iter + BLOCK_INFO_HEADER_SIZE);
+            free_space_ -= cur->size_;
+            return reinterpret_cast<void*>(
+                reinterpret_cast<uint64>(cur) + BLOCK_INFO_HEADER_SIZE);
         }
 
-        if (free_block_iter->size_ > size) {
-            // We found a larger block, we need to fragment it.
-            BlockInfo* new_free_block = 
-                (BlockInfo*)((uint64)free_block_iter + size);
-            // Link the new free block to the free list. We need to update all
-            // of its fields.
-            new_free_block->size_ = free_block_iter->size_ - size;
-            new_free_block->next_free_ = free_block_iter->next_free_;
-            new_free_block->prev_free_ = free_block_iter->prev_free_;
+        if (cur->size_ > needed) {
+            // Split: allocated part stays at cur; remainder becomes a new free block
+            BlockInfo* remainder = reinterpret_cast<BlockInfo*>(
+                reinterpret_cast<uint64>(cur) + needed);
+            remainder->size_ = cur->size_ - needed;
+            remainder->prev_ = cur;
+            remainder->next_ = cur->next_;
+            if (remainder->next_) remainder->next_->prev_ = remainder;
 
-            // New free block is between the free block and its next block.
-            new_free_block->next_ = free_block_iter->next_;
-            new_free_block->prev_ = free_block_iter;
+            // Replace cur in free list with remainder
+            remainder->prev_free_ = prev_free;
+            remainder->next_free_ = cur->next_free_;
+            if (prev_free) prev_free->next_free_ = remainder;
+            else free_block_ptr_ = remainder;
+            if (remainder->next_free_) remainder->next_free_->prev_free_ = remainder;
 
+            // Finalize allocated block
+            cur->size_ = needed;
+            cur->next_ = remainder;
+            cur->prev_free_ = nullptr;
+            cur->next_free_ = nullptr;
 
-            // The allocated block is between the same previous block and the 
-            // new free block.
-            free_block_iter->next_ = new_free_block;
-            free_block_iter->size_ = size;
-
-            // Now update the metadata of the surrounding blocks. The block
-            // preceeding the new allocated block should already point to it,
-            // so we only need to update the next block. It should point back
-            // to the new free block. It may not exist if it is the last block.
-            if (new_free_block->next_) {
-                new_free_block->next_->prev_ = new_free_block;
-            }
-            
-            // We need to do the same for the free list blocks.
-            if (new_free_block->next_free_) {
-                free_block_iter->next_free_->prev_free_ = new_free_block;
-            }
-            if (new_free_block->prev_free_) {
-                free_block_iter->prev_free_->next_free_ = new_free_block;
-            }
-            // And do the same for the surrounding blocks.
-            if (free_block_iter->prev_) {
-                free_block_iter->prev_->next_free_ = new_free_block;
-            }
-            if (new_free_block->next_) {
-                new_free_block->next_->prev_free_ = new_free_block;
-            }
-
-            // We also need to update the free list pointers for the newly
-            // allocated block.
-            free_block_iter->next_free_ = new_free_block;
-            free_block_iter->prev_free_ = nullptr;
-
-            return (void*)((uint64)free_block_iter + BLOCK_INFO_HEADER_SIZE);
+            free_space_ -= needed;
+            return reinterpret_cast<void*>(
+                reinterpret_cast<uint64>(cur) + BLOCK_INFO_HEADER_SIZE);
         }
 
-        // We didn't find the block, move to the next one.
-        free_block_iter = free_block_iter->next_;
+        prev_free = cur;
+        cur = cur->next_free_;
     }
 
-    // We didn't find any block, return nullptr.
+    // No suitable block
     return nullptr;
 }
 
-int MemoryAllocator::mem_free (void* free_block_addr) {
+int MemoryAllocator::mem_free(void* free_block_addr) {
+    if (!free_block_addr) return -1;
 
-    // Check if the pointer is valid.
-    if (!free_block_addr) {
-        debug_print("Free block address is null.");
-        return -1;
-    }
+    BlockInfo* block_info = reinterpret_cast<BlockInfo*>(
+        reinterpret_cast<uint64>(free_block_addr) - BLOCK_INFO_HEADER_SIZE);
 
-    // The pointer being freed points to user data, not the inline metadata.
-    BlockInfo* block_info = (BlockInfo*)free_block_addr - 1;
-
-    // Pointer should be aligned to MEM_BLOCK_SIZE.
-    if ((uint64)block_info % MEM_BLOCK_SIZE != 0) {
-        debug_print("Free block address is not aligned to MEM_BLOCK_SIZE.");
-        return -1;
-    }
-
-    if ((uint64)block_info < HEAP_START_ADDR || (uint64)block_info >= HEAP_END_ADDR) {
-        debug_print("Free block address is not in the heap.");
-        return -1;
-    }
+    // Basic validations
+    uint64 addr = reinterpret_cast<uint64>(block_info);
+    uint64 start = reinterpret_cast<uint64>(HEAP_START_ADDR);
+    uint64 end   = reinterpret_cast<uint64>(HEAP_END_ADDR);
+    if (addr < start || addr >= end) return -1;
+    if ((addr % MEM_BLOCK_SIZE) != 0) return -1;
 
     free_space_ += block_info->size_;
 
-    // Since we are freeing the block, we need to link it into the free list.
-    // The block should already be pointing to the previous ane next free blocks
-    // meaning that we only need to update their free list pointers.
-    if (block_info->prev_free_) {
-        block_info->prev_free_->next_free_ = block_info;
-    } else {
-        free_block_ptr_ = block_info;
+    // Insert into free list in address order
+    BlockInfo* prev_free = nullptr;
+    BlockInfo* cur = free_block_ptr_;
+    while (cur && (reinterpret_cast<uint64>(cur) < addr)) {
+        prev_free = cur;
+        cur = cur->next_free_;
     }
 
-    if (block_info->next_free_) {
-        block_info->next_free_->prev_free_ = block_info;
-    }
+    block_info->prev_free_ = prev_free;
+    block_info->next_free_ = cur;
+    if (prev_free) prev_free->next_free_ = block_info;
+    else free_block_ptr_ = block_info;
+    if (cur) cur->prev_free_ = block_info;
 
-    // We also need to update the prev_ and next_ blocks' free list pointers.
-    // They should already be pointing back to us.
-    assert(block_info->prev_->next == block_info, 
-          "prev_ is not pointing to the block");
-    assert(block_info->next_->prev == block_info, 
-          "next_ is not pointing to the block");
-
-    if (block_info->prev_) {
-        block_info->prev_->next_free_ = block_info;
-    }
-    if (block_info->next_) {
-        block_info->next_->prev_free_ = block_info;
-    }
-
-    // We may have adjacent free blocks, so we need to consolidate them.
+    // Coalesce with next physical neighbor if it's the next free block
     maybe_consolidate(block_info);
     return 0;
 }
 
-// TODO: this method is not correct.
 size_t MemoryAllocator::mem_get_largest_free_block() {
-    return free_block_ptr_->size_;
+    size_t max_size = 0;
+    for (BlockInfo* cur = free_block_ptr_; cur; cur = cur->next_free_) {
+        if (cur->size_ > max_size) max_size = cur->size_;
+    }
+    if (max_size < BLOCK_INFO_HEADER_SIZE) return 0;
+    return max_size - BLOCK_INFO_HEADER_SIZE;
 }
 
 void MemoryAllocator::maybe_consolidate(BlockInfo* block_info) {
-    assert(block_info->next_free_->prev_free_ == block_info, 
-          "next_free_ is not pointing to the block");
-    assert(block_info->prev_free_->next_free_ == block_info, 
-          "prev_free_ is not pointing to the block");
-          
-    // Maybe consolidate with the next block. 
-    if (block_info->next_free_ && 
-        (block_info->next_free_ == block_info->next_)) {
-        // Update the size of the previous free block.
-        block_info->size_ += block_info->next_free_->size_;
-        // If there is a free block after, make sure it points back.
-        if (block_info->next_free_->next_free_) {
-            assert(block_info->next_free_->next_free_->prev_ 
-                != block_info->next_free_->next_free_->prev_free_, 
-                "blocks should already be consolidated");
-            block_info->next_free_->next_free_->prev_free_ = 
-                block_info->next_free_; 
-            }
-        // Update the pointers of the previous free block to point to the
-        // correct next block.
-        block_info->next_ = block_info->next_free_->next_;
-        block_info->next_free_ = block_info->next_free_->next_free_;
-
+    // Try to merge with next neighbor
+    BlockInfo* next = block_info->next_;
+    if (next && block_info->next_free_ == next) {
+        // Remove next from free list
+        BlockInfo* next_next_free = next->next_free_;
+        block_info->size_ += next->size_;
+        block_info->next_ = next->next_;
+        if (block_info->next_) block_info->next_->prev_ = block_info;
+        block_info->next_free_ = next_next_free;
+        if (next_next_free) next_next_free->prev_free_ = block_info;
     }
 
-    // Maybe consolidate with the previous block.
-    if (block_info->prev_free_ && 
-       (block_info->prev_free_ == block_info->prev_)){
-        // Update the size of the previous free block.
-        block_info->prev_free_->size_ += block_info->size_;
-        // If there is a free block after, make sure it points back.
-        if (block_info->next_free_) {
-            assert(block_info->next_free_->prev_
-                != block_info->next_free_->prev_free_, 
-                "blocks should already be consolidated");
-            block_info->next_free_->prev_free_ = block_info->prev_free_;
+    // Try to merge with previous neighbor
+    BlockInfo* prev = block_info->prev_;
+    if (prev && block_info->prev_free_ == prev) {
+        // Remove block_info from free list, extend prev
+        BlockInfo* next_free = block_info->next_free_;
+        prev->size_ += block_info->size_;
+        prev->next_ = block_info->next_;
+        if (prev->next_) prev->next_->prev_ = prev;
+        prev->next_free_ = next_free;
+        if (next_free) next_free->prev_free_ = prev;
+
+        // After merging into prev, optionally merge prev with its next
+        // if they became adjacent and free
+        BlockInfo* prev_next = prev->next_;
+        if (prev_next && prev->next_free_ == prev_next) {
+            BlockInfo* nnext_free = prev_next->next_free_;
+            prev->size_ += prev_next->size_;
+            prev->next_ = prev_next->next_;
+            if (prev->next_) prev->next_->prev_ = prev;
+            prev->next_free_ = nnext_free;
+            if (nnext_free) nnext_free->prev_free_ = prev;
         }
-        // Update the pointers of the previous free block to point to the
-        // correct next block.
-        block_info->prev_free_->next_ = block_info->next_;
-        block_info->prev_free_->next_free_ = block_info->next_free_;
     }
 }
