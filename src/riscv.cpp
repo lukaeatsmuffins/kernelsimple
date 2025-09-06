@@ -49,6 +49,19 @@ void Riscv::handleSupervisorTrap()
             case SyscallCode::MEM_GET_LARGEST_FREE_BLOCK:
                 MemoryAllocator::getInstance()->mem_get_largest_free_block();
                 break;
+            case SyscallCode::THREAD_CREATE: {
+                thread_t* handle = (thread_t*)a1;
+                *handle = (thread_t)TCB::createThread((void(*)(void*))a1, (void*)a2);
+                if (!(*handle))
+                    res = -1;
+            }
+            break;
+            case SyscallCode::THREAD_EXIT:
+                TCB::exit();
+                break;
+            case SyscallCode::THREAD_DISPATCH:
+                TCB::dispatch();
+                break;
         }
         __asm__ volatile ("mv a0, %0" : : "r"(res));
 

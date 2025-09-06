@@ -3,7 +3,7 @@
 #include "../h/print.hpp"
 #include "../h/syscall_c.hpp"
 
-void worker_ecall() {
+void worker_ecall(void* arg) {
     printString("Starting ecall worker\n");
     __asm__ volatile ("ecall");
     for(int i = 0; i < 99999999; ++i)
@@ -12,7 +12,7 @@ void worker_ecall() {
     printString("Finishing ecall worker\n");
 }
 
-void workerBodyA()
+void workerBodyA(void* arg)
 {
     for (uint64 i = 0; i < 10; i++)
     {
@@ -30,7 +30,7 @@ void workerBodyA()
     }
 }
 
-void workerBodyB()
+void workerBodyB(void* arg)
 {
     for (uint64 i = 0; i < 16; i++)
     {
@@ -55,7 +55,7 @@ static uint64 fibonacci(uint64 n)
     return fibonacci(n - 1) + fibonacci(n - 2);
 }
 
-void workerBodyC()
+void workerBodyC(void* arg)
 {
     uint8 i = 0;
     for (; i < 3; i++)
@@ -90,7 +90,7 @@ void workerBodyC()
 //    TCB::yield();
 }
 
-void workerBodyD()
+void workerBodyD(void* arg)
 {
     uint8 i = 10;
     for (; i < 13; i++)
@@ -118,13 +118,12 @@ void workerBodyD()
 //    TCB::yield();
 }
 
-void workerTest()
+void workerTest(void* arg)
 {
     printString("--------------------------------\n");
     printString("Starting test\n");
     printString("--------------------------------\n");
 
-    printString("Test\n");
     void* ptr = mem_alloc(1024);
     printString("ptr=");
     printInteger((uint64)ptr);

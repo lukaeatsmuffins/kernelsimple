@@ -23,3 +23,15 @@ size_t mem_get_free_space() {
 size_t mem_get_largest_free_block() {
     return syscall(SyscallCode::MEM_GET_LARGEST_FREE_BLOCK);
 }
+
+int thread_create (thread_t* handle, void(*start_routine)(void*), void* arg) {
+    return syscall(SyscallCode::THREAD_CREATE, (uint64)handle, (uint64)start_routine, (uint64)arg);
+}
+
+int thread_exit () {
+    return syscall(SyscallCode::THREAD_EXIT);
+}
+
+void thread_dispatch () {
+    syscall(SyscallCode::THREAD_DISPATCH);
+}

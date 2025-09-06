@@ -1,11 +1,11 @@
 #include "../lib/hw.h"
 
-class _thread;
-class _sem;
+class TCB;
+class Semaphore;
 const int EOF = -1; 
 
-typedef _thread* thread_t;
-typedef _sem* sem_t;
+typedef TCB* thread_t;
+typedef Semaphore* sem_t;
 typedef unsigned long time_t;
 
 

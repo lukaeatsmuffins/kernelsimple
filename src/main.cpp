@@ -12,16 +12,16 @@ int main()
     TCB *threads[2];
 
     debug_print("Main thread created\n");
-    threads[0] = TCB::createThread(nullptr);
+    threads[0] = TCB::createThread(nullptr, nullptr);
     TCB::running = threads[0];
 
-    threads[1] = TCB::createThread(workerTest);
+    threads[1] = TCB::createThread(workerTest, nullptr);
     // printString("ThreadA created\n");
-    // threads[2] = TCB::createThread(workerBodyB);
+    // threads[2] = TCB::createThread(workerBodyB, nullptr);
     // printString("ThreadB created\n");
-    // threads[3] = TCB::createThread(workerBodyC);
+    // threads[3] = TCB::createThread(workerBodyC, nullptr);
     // printString("ThreadC created\n");
-    // threads[4] = TCB::createThread(workerBodyD);
+    // threads[4] = TCB::createThread(workerBodyD, nullptr);
     // printString("ThreadD created\n");
 
     Riscv::w_stvec((uint64) &Riscv::supervisorTrap);

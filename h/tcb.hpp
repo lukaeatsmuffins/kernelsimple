@@ -14,15 +14,21 @@ class TCB
 public:
     ~TCB() { delete[] stack; }
 
-    bool isFinished() const { return finished; }
+    bool isFinished() const { return finished_; }
 
-    void setFinished(bool value) { finished = value; }
+    void setFinished(bool value) { finished_ = value; }
+
+    void block() { blocked_ = true; }
+
+    void unblock() { blocked_ = false; }
+
+    bool isBlocked() { return blocked_; }
 
     uint64 getTimeSlice() const { return timeSlice; }
 
-    using Body = void (*)();
+    using Body = void (*)(void*);
 
-    static TCB *createThread(Body body);
+    static TCB *createThread(Body body, void* arg = nullptr);
 
     // Let's scheduler decide the next process.
     static void yield();
@@ -30,14 +36,16 @@ public:
     static TCB *running;
 
 private:
-    TCB(Body body, uint64 timeSlice) :
+    TCB(Body body, void* arg, uint64 timeSlice) :
             body(body),
+            arg_(arg),
             stack(body != nullptr ? new uint64[STACK_SIZE] : nullptr),
             context({(uint64) &threadWrapper,
                      stack != nullptr ? (uint64) &stack[STACK_SIZE] : 0
                     }),
             timeSlice(timeSlice),
-            finished(false)
+            finished_(false),
+            blocked_(false)
     {
         if (body != nullptr) { Scheduler::put(this); }
     }
@@ -49,10 +57,12 @@ private:
     };
 
     Body body;
+    void* arg_;
     uint64 *stack;
     Context context;
     uint64 timeSlice;
-    bool finished;
+    bool finished_;
+    bool blocked_;
 
     friend class Riscv;
 
@@ -62,6 +72,9 @@ private:
 
     // Releases the old process and starts a new one.
     static void dispatch();
+
+    // Exits the currently running thread.
+    static void exit();
 
     static uint64 timeSliceCounter;
 
