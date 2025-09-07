@@ -6,34 +6,28 @@
 #include "../h/workers.hpp"
 #include "../h/print.hpp"
 #include "../h/riscv.hpp"
+#include "../h/syscall_c.hpp"
+
+void userMainWrapper(void* arg)
+{
+    userMain();
+}
 
 int main()
 {
-    TCB *threads[2];
-
-    debug_print("Main thread created\n");
-    threads[0] = TCB::createThread(nullptr, nullptr);
-    TCB::running = threads[0];
-
-    threads[1] = TCB::createThread(workerTest, nullptr);
-    // printString("ThreadA created\n");
-    // threads[2] = TCB::createThread(workerBodyB, nullptr);
-    // printString("ThreadB created\n");
-    // threads[3] = TCB::createThread(workerBodyC, nullptr);
-    // printString("ThreadC created\n");
-    // threads[4] = TCB::createThread(workerBodyD, nullptr);
-    // printString("ThreadD created\n");
+    thread_t main_handle;
+    thread_t userMain_handle;
+    thread_create(&main_handle, nullptr, nullptr);
+    thread_create(&userMain_handle, userMainWrapper, nullptr);
+    TCB::running = main_handle;
 
     Riscv::w_stvec((uint64) &Riscv::supervisorTrap);
     Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
 
-    while (!threads[1]->isFinished())
-        TCB::yield();
-
-    for (auto &thread: threads)
-    {
-        delete thread;
+    while (userMain_handle) {
+        thread_dispatch();
     }
+
     printString("Finished\n");
 
     return 0;

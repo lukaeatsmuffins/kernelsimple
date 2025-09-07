@@ -48,7 +48,7 @@ class MemoryAllocator {
     // Block info header size.
     static const uint64 BLOCK_INFO_HEADER_SIZE = 2 * sizeof(uint64);
 
-    // Private constructor and assignment operator to prevent copying
+    // Private constructor and assignment operator to prevent copying.
     MemoryAllocator() = default;
     MemoryAllocator(const MemoryAllocator &) = delete;
     MemoryAllocator &operator=(const MemoryAllocator &) = delete;

@@ -14,18 +14,15 @@ TCB *TCB::createThread(Body body, void* arg)
 // Let's scheduler decide the next process.
 void TCB::yield()
 {
-    // __asm__ volatile ("ecall");
     dispatch();
 }
 
 // Releases the old process and starts a new one.
 void TCB::dispatch()
 {
-    // Put the process back into the queue if it isn't finished and if it isn't
-    // blocked.
+
     TCB *old = running;
-    // TODO: Should we delete the old thread?
-    if (!old->isFinished() && !old->isBlocked()) { Scheduler::put(old); }
+    if (!old->isBlocked() && !old->isFinished()) { Scheduler::put(old); }
 
     running = Scheduler::get();
 
@@ -38,14 +35,14 @@ void TCB::threadWrapper()
 {
     Riscv::popSppSpie();
     running->body(running->arg_);
-    running->setFinished(true);
-    TCB::yield();
+    thread_exit();
 }
 
 void TCB::exit() {
     // Switch context to the next thread.
     TCB *old = running;
+    old->setFinished(true);
     running = Scheduler::get();
+    assert(running != nullptr, "Scheduler should return at least one thread");
     TCB::contextSwitch(&old->context, &running->context);
-    // delete old; ?? WE SHOULD DELETE THE OLD THREAD? RIGHT?!
 }

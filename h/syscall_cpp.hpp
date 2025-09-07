@@ -9,15 +9,13 @@
 class Thread {
     public:
     Thread(void (*body)(void*), void* arg) : body(body), arg(arg) {
-        if(thread_create(&myHandle, this->run, this) != 0) {
+        if(thread_create(&myHandle, this->run, (void*)this) != 0) {
             myHandle = nullptr;
         }
     }
     virtual ~Thread() {
-        // Wait for the thread to finish.
-        while (!myHandle->isFinished()) {
-            myHandle->yield();
-        }
+        // TODO: Maybe check.
+        thread_exit();
     }
     int start() {
         // TODO: Should we first initialize the thread without it starting?

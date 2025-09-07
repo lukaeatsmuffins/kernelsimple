@@ -8,6 +8,7 @@ uint64 syscall(SyscallCode code, uint64 a0 = 0, uint64 a1 = 0, uint64 a2 = 0, ui
     return result;
 }
 
+// TODO: Do this with number of blocks instead of size.
 void* mem_alloc (size_t size) {
     return (void*)syscall(SyscallCode::MEM_ALLOC, (uint64)size);
 }
@@ -34,4 +35,20 @@ int thread_exit () {
 
 void thread_dispatch () {
     syscall(SyscallCode::THREAD_DISPATCH);
+}
+
+int sem_open (sem_t* handle, unsigned init) {
+    return syscall(SyscallCode::SEM_OPEN, (uint64)handle, (uint64)init);
+}
+
+int sem_close (sem_t handle) {
+    return syscall(SyscallCode::SEM_CLOSE, (uint64)handle);
+}
+
+int sem_wait (sem_t id) {
+    return syscall(SyscallCode::SEM_WAIT, (uint64)id);
+}
+
+int sem_signal (sem_t id) {
+    return syscall(SyscallCode::SEM_SIGNAL, (uint64)id);
 }

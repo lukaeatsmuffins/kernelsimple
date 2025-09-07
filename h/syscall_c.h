@@ -1,7 +1,10 @@
-#include "../lib/hw.h"
+#ifndef OS1_SYSCALL_C_H
+#define OS1_SYSCALL_C_H
 
-class TCB;
-class Semaphore;
+#include "../lib/hw.h"
+#include "semaphore.hpp"
+#include "tcb.hpp"
+
 const int EOF = -1; 
 
 typedef TCB* thread_t;
@@ -53,3 +56,5 @@ int time_sleep (time_t);
 char getc ();
 
 void putc (char);
+
+#endif // OS1_SYSCALL_C_H

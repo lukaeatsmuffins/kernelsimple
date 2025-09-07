@@ -16,14 +16,17 @@ void Semaphore::close()
         t->unblock();
         Scheduler::put(t);
     }
-
-    delete this;
 }
 
 int Semaphore::wait()
 {
-    // TODO: Do we need to disable interrupts?
-    if (value_ > 0)
+    // Cannot wait on a closed semaphore.
+    if (closed_)
+    {
+        return -1;
+    }
+
+     if (value_ > 0)
     {
         value_ -= 1;
         return 0;
@@ -37,15 +40,15 @@ int Semaphore::wait()
     TCB::yield();
 
     // TODO: Check if this works as a way of detecting closed semaphores.
-    return closed_ ? -1 : 0;
+    return 0;
 }
 
 void Semaphore::signal()
 {
-    // Thread should already be in the scheduler, we just need to unblock it.
     if (TCB *t = blocked_.removeFirst())
     {
         t->unblock();
+        Scheduler::put(t);
     }
     else
     {

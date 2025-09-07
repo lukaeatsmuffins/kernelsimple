@@ -54,13 +54,41 @@ void Riscv::handleSupervisorTrap()
                 *handle = (thread_t)TCB::createThread((void(*)(void*))a1, (void*)a2);
                 if (!(*handle))
                     res = -1;
-            }
-            break;
-            case SyscallCode::THREAD_EXIT:
+                }
+                break;
+            case SyscallCode::THREAD_EXIT: {
                 TCB::exit();
+                thread_t* handle = (thread_t*)a1;
+                assert(*handle == TCB::running, "Thread exit should be called by the running thread");
+                delete *handle;
+                }
                 break;
             case SyscallCode::THREAD_DISPATCH:
                 TCB::dispatch();
+                break;
+            case SyscallCode::SEM_OPEN: {
+                sem_t* handle = (sem_t*)a1;
+                *handle = (sem_t)Semaphore::open(a2);
+                if (!(*handle))
+                    res = -1;
+                }
+                break;
+            case SyscallCode::SEM_CLOSE: {
+                // TODO: Double check.
+                sem_t* handle = (sem_t*)a1;
+                (*handle)->close();
+                delete *handle;
+                }
+                break;
+            case SyscallCode::SEM_WAIT: {
+                sem_t* handle = (sem_t*)a1;
+                res = (*handle)->wait();
+            }
+                break;
+            case SyscallCode::SEM_SIGNAL: {
+                sem_t* handle = (sem_t*)a1;
+                (*handle)->signal();
+            }
                 break;
         }
         __asm__ volatile ("mv a0, %0" : : "r"(res));
