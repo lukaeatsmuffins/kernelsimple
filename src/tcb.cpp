@@ -42,11 +42,13 @@ void TCB::dispatch()
 void TCB::threadWrapper()
 {
     Riscv::popSppSpie();
-    // debug_print("TCB: Starting thread body: ");
-    // debug_print((uint64)running->body);
-    // debug_print(" for thread: ");
-    // debug_print((uint64)running);
-    // debug_print("\n");
+    debug_print("TCB: Starting thread body: ");
+    debug_print((uint64)running->body);
+    debug_print(" for thread: ");
+    debug_print((uint64)running);
+    debug_print(" and arg: ");
+    debug_print((uint64)running->arg_);
+    debug_print("\n");
     
     running->body(running->arg_);
     thread_exit();

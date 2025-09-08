@@ -7,6 +7,7 @@
 #include "../h/print.hpp"
 #include "../h/riscv.hpp"
 #include "../h/syscall_c.h"
+#include "../h/syscall_cpp.hpp"
 
 void userMain();
 
@@ -15,6 +16,10 @@ void userMainWrapper(void* arg)
     debug_print("Starting userMain\n");
     userMain();
 }
+
+// void randomWrapper(void* arg) {
+//     debug_print("Starting random\n");
+// }
 
 int main()
 {
@@ -41,6 +46,9 @@ int main()
     debug_print("Setting supervisor trap and enabling interrupts\n");
     Riscv::w_stvec((uint64) &Riscv::supervisorTrap);
     Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
+
+    // Thread randomThread(randomWrapper, nullptr);
+    // randomThread.start();
 
     while (!userMain_handle->isFinished()) {
         // TCB::yield(); // This causes a lock???

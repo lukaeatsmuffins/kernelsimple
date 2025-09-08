@@ -8,29 +8,17 @@
 
 // TODO: Move _new.cpp to this file
 
-void body_exec (void* thread) {
-    debug_print("CPP API: Executing thread body\n");
-    // static_cast<Thread*>(thread)->run();
-    // debug_print("CPP API: Thread body executed\n");
-}
-
 class Thread {
     public:
     Thread(void (*body)(void*), void* arg) : body(body), arg(arg) {}
-    virtual ~Thread() {
-        // TODO: Maybe check.
-        // This normally exits the currently running thread. I am not sure if 
-        // this will be called from a currently running thread though. In other
-        // words, if a different thread calls this thread's destructor, will
-        // that thread exit or will the thread this object is managing exit?
-        thread_exit();
-    }
+    virtual ~Thread() { /* Upon finishing thread exits by itself. */}
     int start() {
-        // TODO: Should we first initialize the thread without it starting?
-        // The current implementation of TCB doesn't allow for this.
-        // return myHandle->start();
         debug_print("CPP API: Starting thread\n");
-        if(thread_create(&myHandle, body_exec, this) != 0) {
+        debug_print("CPP API: THIS POINTER: ");
+        debug_print((uint64)this);
+        debug_print("\n");
+        
+        if(thread_create(&myHandle, body_exec, (void*)this) != 0) {
             myHandle = nullptr;
             return -1;
         }
@@ -52,12 +40,7 @@ class Thread {
     }
 
     private:
-
-    // static void body_exec (void* thread) {
-    //     debug_print("CPP API: Executing thread body\n");
-    //     // static_cast<Thread*>(thread)->run();
-    //     // debug_print("CPP API: Thread body executed\n");
-    // }
+    static void body_exec (void* thread);
 
     thread_t myHandle;
     void (*body)(void*);

@@ -16,6 +16,15 @@ void Riscv::popSppSpie()
 
 void Riscv::handleSupervisorTrap()
 {
+    uint64 a0, a1, a2, a3, a4, a5, a6, a7;
+    __asm__ volatile ("mv %0, a0" : "=r"(a0));
+    __asm__ volatile ("mv %0, a1" : "=r"(a1));
+    __asm__ volatile ("mv %0, a2" : "=r"(a2));
+    __asm__ volatile ("mv %0, a3" : "=r"(a3));
+    __asm__ volatile ("mv %0, a4" : "=r"(a4));
+    __asm__ volatile ("mv %0, a5" : "=r"(a5));
+    __asm__ volatile ("mv %0, a6" : "=r"(a6));
+    __asm__ volatile ("mv %0, a7" : "=r"(a7));
 
     uint64 scause = r_scause();
     if (scause == 0x0000000000000008UL || scause == 0x0000000000000009UL)
@@ -25,16 +34,6 @@ void Riscv::handleSupervisorTrap()
         uint64 volatile sepc = r_sepc() + 4;
         uint64 volatile sstatus = r_sstatus();
         // debug_print("Supervisor trap handler called\n");
-
-        uint64 a0, a1, a2, a3, a4, a5, a6, a7;
-        __asm__ volatile ("mv %0, a0" : "=r"(a0));
-        __asm__ volatile ("mv %0, a1" : "=r"(a1));
-        __asm__ volatile ("mv %0, a2" : "=r"(a2));
-        __asm__ volatile ("mv %0, a3" : "=r"(a3));
-        __asm__ volatile ("mv %0, a4" : "=r"(a4));
-        __asm__ volatile ("mv %0, a5" : "=r"(a5));
-        __asm__ volatile ("mv %0, a6" : "=r"(a6));
-        __asm__ volatile ("mv %0, a7" : "=r"(a7));
 
         uint64 res = 0;
         switch (a0) {

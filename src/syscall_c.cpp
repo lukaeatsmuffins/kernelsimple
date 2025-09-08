@@ -32,7 +32,6 @@ size_t mem_get_largest_free_block() {
 }
 
 int thread_create (thread_t* handle, void(*start_routine)(void*), void* arg) {
-    debug_print("Syscall thread create called\n");
     return syscall(SyscallCode::THREAD_CREATE, (uint64)handle, (uint64)start_routine, (uint64)arg);
 }
 
@@ -42,7 +41,6 @@ int thread_exit () {
 }
 
 void thread_dispatch () {
-    debug_print("Syscall thread dispatch called\n");
     syscall(SyscallCode::THREAD_DISPATCH);
 }
 
