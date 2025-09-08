@@ -9,17 +9,10 @@
 class Thread {
     public:
     Thread(void (*body)(void*), void* arg) : body(body), arg(arg) {}
-    virtual ~Thread() {
-        // TODO: Maybe check.
-        thread_exit();
-    }
-    int start() {
-        return thread_create(&myHandle, this->trampoline, (void*)this);
-    }
-    static void dispatch() {
-        thread_dispatch();
-    }
-    static int sleep(time_t t) { return time_sleep(t); }
+    virtual ~Thread();
+    int start();
+    static void dispatch();
+    static int sleep(time_t t);
 
     protected:
     Thread();
@@ -68,9 +61,7 @@ class Semaphore {
 
 class PeriodicThread : public Thread {
     public:
-    void terminate() {
-        thread_exit();
-    }
+    void terminate();
 
     protected:
     // TODO: Make sure this doesn't create two threads.
@@ -82,7 +73,7 @@ class PeriodicThread : public Thread {
     }
     virtual void periodicActivation() {
         Thread::run();
-        time_sleep(period);
+        Thread::sleep(period);
     }
 
     private:
