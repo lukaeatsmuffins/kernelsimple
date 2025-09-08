@@ -8,30 +8,27 @@
 
 class Thread {
     public:
-    Thread(void (*body)(void*), void* arg) : body(body), arg(arg) {
-        if(thread_create(&myHandle, this->run, (void*)this) != 0) {
-            myHandle = nullptr;
-        }
-    }
+    Thread(void (*body)(void*), void* arg) : body(body), arg(arg) {}
     virtual ~Thread() {
         // TODO: Maybe check.
         thread_exit();
     }
     int start() {
-        // TODO: Should we first initialize the thread without it starting?
-        // The current implementation of TCB doesn't allow for this.
-        // return myHandle->start();
+        return thread_create(&myHandle, this->trampoline, (void*)this);
     }
     static void dispatch() {
-        myHandle->yield();
+        thread_dispatch();
     }
-    // static int sleep(time_t);
+    static int sleep(time_t t) { return time_sleep(t); }
 
     protected:
     Thread();
-    // TODO: Where should run be called and what should it do?
     virtual void run() {
         body(arg);
+    }
+    static void trampoline(void* arg) {
+        Thread* self = (Thread*)arg;
+        if (self) self->run();
     }
 
     private:
@@ -77,7 +74,7 @@ class PeriodicThread : public Thread {
 
     protected:
     // TODO: Make sure this doesn't create two threads.
-    PeriodicThread(time_t period) : period(period) {}
+    PeriodicThread(time_t period) : Thread(nullptr, nullptr), period(period) {}
     virtual void run() override {
         while (true) {
             periodicActivation();
@@ -92,10 +89,10 @@ class PeriodicThread : public Thread {
     time_t period;
 };
 
-// class Console {
-//     public:
-//     static char getc();
-//     static void putc(char);
-// };
+class Console {
+    public:
+    static char getc();
+    static void putc(char);
+};
 
 #endif // OS1_SYSCALL_CPP_HPP
