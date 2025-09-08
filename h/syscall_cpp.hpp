@@ -10,14 +10,7 @@
 class Thread {
     public:
     Thread(void (*body)(void*), void* arg) : body(body), arg(arg) {}
-    virtual ~Thread() {
-        // TODO: Maybe check.
-        // This normally exits the currently running thread. I am not sure if 
-        // this will be called from a currently running thread though. In other
-        // words, if a different thread calls this thread's destructor, will
-        // that thread exit or will the thread this object is managing exit?
-        thread_exit();
-    }
+    virtual ~Thread() {}
     int start() {
         // TODO: Should we first initialize the thread without it starting?
         // The current implementation of TCB doesn't allow for this.
@@ -31,9 +24,7 @@ class Thread {
     static void dispatch() {
         thread_dispatch();
     }
-    static int sleep(time_t time) {
-        return 0;
-    }
+    static int sleep(time_t time) { return time_sleep(time); }
 
     protected:
     Thread() : myHandle(nullptr), body(nullptr), arg(nullptr) {}

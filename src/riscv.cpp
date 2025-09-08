@@ -51,7 +51,7 @@ void Riscv::handleSupervisorTrap()
                 break;
             case SyscallCode::THREAD_CREATE: {
                 thread_t* handle = (thread_t*)a1;
-                *handle = (thread_t)TCB::createThread((void(*)(void*))a1, (void*)a2);
+                *handle = (thread_t)TCB::createThread((void(*)(void*))a2, (void*)a3);
                 if (!(*handle))
                     res = -1;
                 }
