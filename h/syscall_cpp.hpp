@@ -84,7 +84,7 @@ class PeriodicThread : public Thread {
         }
     }
     virtual void periodicActivation() {
-        body(arg);
+        Thread::run();
         time_sleep(period);
     }
 
