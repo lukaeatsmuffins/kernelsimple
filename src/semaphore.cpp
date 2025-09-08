@@ -1,14 +1,19 @@
 #include "../h/semaphore.hpp"
 #include "../h/tcb.hpp"
 #include "../h/scheduler.hpp"
+#include "../h/print.hpp"
 
 _semaphore *_semaphore::open(unsigned init)
 {
+    debug_print("Semaphore open: Initializing semaphore with value: ");
+    debug_print((uint64)init);
+    debug_print("\n");
     return new _semaphore((int)init);
 }
 
 void _semaphore::close()
 {
+    debug_print("Semaphore close: Closing semaphore\n");
     closed_ = true;
     // Deblock all of the threads and put them back into the scheduler.
     while (TCB *t = blocked_.removeFirst())
@@ -26,7 +31,7 @@ int _semaphore::wait()
         return -1;
     }
 
-     if (value_ > 0)
+    if (value_ > 0)
     {
         value_ -= 1;
         return 0;
@@ -56,4 +61,4 @@ void _semaphore::signal()
     }
 }
 
-_semaphore::_semaphore(int init) : value_(init), blocked_() {}
+_semaphore::_semaphore(int init) : value_(init), closed_(false), blocked_() {}

@@ -46,6 +46,12 @@ void thread_dispatch () {
 
 int sem_open (sem_t* handle, unsigned init) {
     debug_print("Syscall sem open called\n");
+    debug_print("Syscall sem open: Handle: ");
+    debug_print((uint64)handle);
+    debug_print("\n");
+    debug_print("Syscall sem open: Init: ");
+    debug_print((uint64)init);
+    debug_print("\n");
     return syscall(SyscallCode::SEM_OPEN, (uint64)handle, (uint64)init);
 }
 
@@ -55,12 +61,11 @@ int sem_close (sem_t handle) {
 }
 
 int sem_wait (sem_t id) {
-    debug_print("Syscall sem wait called\n");
+
     return syscall(SyscallCode::SEM_WAIT, (uint64)id);
 }
 
 int sem_signal (sem_t id) {
-    debug_print("Syscall sem signal called\n");
     return syscall(SyscallCode::SEM_SIGNAL, (uint64)id);
 }
 

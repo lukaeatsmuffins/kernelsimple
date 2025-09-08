@@ -80,23 +80,29 @@ void Riscv::handleSupervisorTrap()
                 *handle = (sem_t)_semaphore::open(a2);
                 if (!(*handle))
                     res = -1;
+                debug_print("Semaphore open: Handle: ");
+                debug_print((uint64)*handle);
+                debug_print("\n");
+                debug_print("On handle addr: ");
+                debug_print((uint64)handle);
+                debug_print("\n");
                 }
                 break;
             case SyscallCode::SEM_CLOSE: {
                 // TODO: Double check.
-                sem_t* handle = (sem_t*)a1;
-                (*handle)->close();
-                delete *handle;
+                sem_t handle = (sem_t)a1;
+                handle->close();
+                delete handle;
                 }
                 break;
             case SyscallCode::SEM_WAIT: {
-                sem_t* handle = (sem_t*)a1;
-                res = (*handle)->wait();
+                sem_t handle = (sem_t)a1;
+                res = handle->wait();
             }
                 break;
             case SyscallCode::SEM_SIGNAL: {
-                sem_t* handle = (sem_t*)a1;
-                (*handle)->signal();
+                sem_t handle = (sem_t)a1;
+                handle->signal();
             }
                 break;
             case SyscallCode::GETC:
