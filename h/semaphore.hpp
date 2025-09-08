@@ -1,6 +1,7 @@
 #ifndef OS1_SIMPLE_SEMAPHORE_LOWER_HPP
 #define OS1_SIMPLE_SEMAPHORE_LOWER_HPP
 
+#include "tcb.hpp"
 #include "list.hpp"
 
 class TCB;

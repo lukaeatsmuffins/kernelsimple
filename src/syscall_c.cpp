@@ -70,7 +70,7 @@ int sem_signal (sem_t id) {
 }
 
 int time_sleep (time_t time) {
-    return 0;
+    return syscall(SyscallCode::TIME_SLEEP, (uint64)time);
 }
 
 char getc () {

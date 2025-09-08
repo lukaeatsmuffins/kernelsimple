@@ -79,14 +79,13 @@ class Semaphore {
 class PeriodicThread : public Thread {
     public:
     void terminate() {
-        thread_exit();
+        period = 0;
     }
 
     protected:
-    // TODO: Make sure this doesn't create two threads.
     PeriodicThread(time_t period) : period(period) {}
     virtual void run() override {
-        while (true) {
+        while (period != 0) {
             periodicActivation();
             time_sleep(period);
         }

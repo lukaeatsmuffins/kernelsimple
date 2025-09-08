@@ -1,6 +1,8 @@
 #ifndef LIST_HPP
 #define LIST_HPP
 
+#include "../lib/hw.h"
+
 template<typename T>
 class List
 {
@@ -85,6 +87,19 @@ public:
     {
         if (!tail) { return 0; }
         return tail->data;
+    }
+
+    // Rule defines ordering. rule(prev, curr) and rule(curr, next) should be true.
+    void addByRule(T *data, bool (*rule)(T *, T *, uint64&), uint64 counter) {
+        Elem* prev = nullptr, *curr = head;
+        while (curr && !rule(curr->data, data, counter)) {
+            prev = curr;
+            curr = curr->next;
+        }
+        Elem* elem = new Elem(data, curr);
+        if (prev) { prev->next = elem; }
+        else { head = elem; }
+        if (!curr) { tail = elem; }
     }
 };
 

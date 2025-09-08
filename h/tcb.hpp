@@ -24,6 +24,10 @@ public:
 
     bool isBlocked() { return blocked_; }
 
+    void setSleeping(bool value) { sleeping_ = value; }
+
+    bool isSleeping() { return sleeping_; }
+
     uint64 getTimeSlice() const { return timeSlice; }
 
     using Body = void (*)(void*);
@@ -45,7 +49,8 @@ private:
                     }),
             timeSlice(timeSlice),
             finished_(false),
-            blocked_(false)
+            blocked_(false),
+            sleeping_(false)
     {
         if (body != nullptr) { Scheduler::put(this); }
     }
@@ -63,6 +68,7 @@ private:
     uint64 timeSlice;
     bool finished_;
     bool blocked_;
+    bool sleeping_;
 
     friend class Riscv;
 

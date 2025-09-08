@@ -24,7 +24,9 @@ void TCB::dispatch()
 {
 
     TCB *old = running;
-    if (!old->isBlocked() && !old->isFinished()) { Scheduler::put(old); }
+    if (!old->isBlocked() && !old->isFinished() && !old->isSleeping()) { 
+        Scheduler::put(old); 
+    }
 
     running = Scheduler::get();
     // debug_print("Running thread: ");

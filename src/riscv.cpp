@@ -89,7 +89,6 @@ void Riscv::handleSupervisorTrap()
                 }
                 break;
             case SyscallCode::SEM_CLOSE: {
-                // TODO: Double check.
                 sem_t handle = (sem_t)a1;
                 handle->close();
                 delete handle;
@@ -103,6 +102,13 @@ void Riscv::handleSupervisorTrap()
             case SyscallCode::SEM_SIGNAL: {
                 sem_t handle = (sem_t)a1;
                 handle->signal();
+            }
+                break;
+            case SyscallCode::TIME_SLEEP: {
+                time_t time = (time_t)a1;
+                // TODO: Enchance rounding.
+                uint64 time_slices_left = time / TCB::TIME_SLICE;
+                Scheduler::putToSleep(time_slices_left);
             }
                 break;
             case SyscallCode::GETC:
@@ -125,6 +131,7 @@ void Riscv::handleSupervisorTrap()
         // interrupt: yes; cause code: supervisor software interrupt (CLINT; machine timer interrupt)
         mc_sip(SIP_SSIP);
         TCB::timeSliceCounter++;
+        Scheduler::maybeWakeThreads();
         if (TCB::timeSliceCounter >= TCB::running->getTimeSlice())
         {
             uint64 volatile sepc = r_sepc();
