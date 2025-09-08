@@ -8,7 +8,7 @@
 const int EOF = -1; 
 
 typedef TCB* thread_t;
-typedef Semaphore* sem_t;
+typedef _semaphore* sem_t;
 typedef unsigned long time_t;
 
 

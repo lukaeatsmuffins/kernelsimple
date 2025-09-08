@@ -1,6 +1,7 @@
 #include "../h/tcb.hpp"
 #include "../h/riscv.hpp"
 #include "../h/print.hpp"
+#include "../h/syscall_c.h"
 
 TCB *TCB::running = nullptr;
 

@@ -5,10 +5,10 @@
 
 class TCB;
 
-class Semaphore
+class _semaphore
 {
 public:
-    static Semaphore *open(unsigned init = 1);
+    static _semaphore *open(unsigned init = 1);
 
     void close();
 
@@ -16,11 +16,11 @@ public:
 
     void signal();
 
-    Semaphore(const Semaphore &) = delete;
-    Semaphore &operator=(const Semaphore &) = delete;
+    _semaphore(const _semaphore &) = delete;
+    _semaphore &operator=(const _semaphore &) = delete;
 
 private:
-    explicit Semaphore(int init);
+    explicit _semaphore(int init);
 
     int value_;
     bool closed_;

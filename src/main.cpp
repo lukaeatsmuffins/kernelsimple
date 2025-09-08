@@ -6,7 +6,9 @@
 #include "../h/workers.hpp"
 #include "../h/print.hpp"
 #include "../h/riscv.hpp"
-#include "../h/syscall_c.hpp"
+#include "../h/syscall_c.h"
+
+void userMain();
 
 void userMainWrapper(void* arg)
 {

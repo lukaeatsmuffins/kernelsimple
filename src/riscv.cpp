@@ -5,7 +5,7 @@
 #include "../h/riscv.hpp"
 #include "../h/tcb.hpp"
 #include "../lib/console.h"
-#include "../h/syscall_c.hpp"
+#include "../h/syscall_c.h"
 #include "../h/mem.hpp"
 
 void Riscv::popSppSpie()
@@ -68,7 +68,7 @@ void Riscv::handleSupervisorTrap()
                 break;
             case SyscallCode::SEM_OPEN: {
                 sem_t* handle = (sem_t*)a1;
-                *handle = (sem_t)Semaphore::open(a2);
+                *handle = (sem_t)_semaphore::open(a2);
                 if (!(*handle))
                     res = -1;
                 }

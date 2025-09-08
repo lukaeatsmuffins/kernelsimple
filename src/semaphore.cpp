@@ -2,12 +2,12 @@
 #include "../h/tcb.hpp"
 #include "../h/scheduler.hpp"
 
-Semaphore *Semaphore::open(unsigned init)
+_semaphore *_semaphore::open(unsigned init)
 {
-    return new Semaphore((int)init);
+    return new _semaphore((int)init);
 }
 
-void Semaphore::close()
+void _semaphore::close()
 {
     closed_ = true;
     // Deblock all of the threads and put them back into the scheduler.
@@ -18,7 +18,7 @@ void Semaphore::close()
     }
 }
 
-int Semaphore::wait()
+int _semaphore::wait()
 {
     // Cannot wait on a closed semaphore.
     if (closed_)
@@ -43,7 +43,7 @@ int Semaphore::wait()
     return 0;
 }
 
-void Semaphore::signal()
+void _semaphore::signal()
 {
     if (TCB *t = blocked_.removeFirst())
     {
@@ -56,4 +56,4 @@ void Semaphore::signal()
     }
 }
 
-Semaphore::Semaphore(int init) : value_(init), blocked_() {}
+_semaphore::_semaphore(int init) : value_(init), blocked_() {}
