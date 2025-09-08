@@ -24,6 +24,7 @@ void Riscv::handleSupervisorTrap()
         // Should be triggered on syscall.
         uint64 volatile sepc = r_sepc() + 4;
         uint64 volatile sstatus = r_sstatus();
+        // debug_print("Supervisor trap handler called\n");
 
         uint64 a0, a1, a2, a3, a4, a5, a6, a7;
         __asm__ volatile ("mv %0, a0" : "=r"(a0));
@@ -51,7 +52,16 @@ void Riscv::handleSupervisorTrap()
                 break;
             case SyscallCode::THREAD_CREATE: {
                 thread_t* handle = (thread_t*)a1;
-                *handle = (thread_t)TCB::createThread((void(*)(void*))a1, (void*)a2);
+                *handle = (thread_t)TCB::createThread((void(*)(void*))a2, (void*)a3);
+                // debug_print("Thread created with handle: ");
+                // debug_print((uint64)*handle);
+                // debug_print("\n");
+                // debug_print("Thread body: ");
+                // debug_print((uint64)a2);
+                // debug_print("\n");
+                // debug_print("Thread arg: ");
+                // debug_print((uint64)a3);
+                // debug_print("\n");
                 if (!(*handle))
                     res = -1;
                 }
@@ -90,6 +100,12 @@ void Riscv::handleSupervisorTrap()
                 (*handle)->signal();
             }
                 break;
+            case SyscallCode::GETC:
+                res = __getc();
+                break;
+            case SyscallCode::PUTC:
+                __putc((char)a1);
+                break;
         }
         __asm__ volatile ("mv a0, %0" : : "r"(res));
 
@@ -116,7 +132,7 @@ void Riscv::handleSupervisorTrap()
     }
     else if (scause == 0x8000000000000009UL)
     {
-        // interrupt: yes; cause code: supervisor external interrupt (PLIC; could be keyboard)
+        // debug_print("Console handler called\n");
         console_handler();
     }
     else

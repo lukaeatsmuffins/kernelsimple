@@ -9,6 +9,7 @@ uint64 TCB::timeSliceCounter = 0;
 
 TCB *TCB::createThread(Body body, void* arg)
 {
+    debug_print("TCB: Creating TCB\n");
     return new TCB(body, arg, TIME_SLICE);
 }
 
@@ -26,6 +27,12 @@ void TCB::dispatch()
     if (!old->isBlocked() && !old->isFinished()) { Scheduler::put(old); }
 
     running = Scheduler::get();
+    // debug_print("Running thread: ");
+    // debug_print((uint64)running);
+    // debug_print("\n");
+    // debug_print("Old thread: ");
+    // debug_print((uint64)old);
+    // debug_print("\n");
 
     TCB::contextSwitch(&old->context, &running->context);
 }
@@ -35,12 +42,19 @@ void TCB::dispatch()
 void TCB::threadWrapper()
 {
     Riscv::popSppSpie();
+    // debug_print("TCB: Starting thread body: ");
+    // debug_print((uint64)running->body);
+    // debug_print(" for thread: ");
+    // debug_print((uint64)running);
+    // debug_print("\n");
+    
     running->body(running->arg_);
     thread_exit();
 }
 
 void TCB::exit() {
     // Switch context to the next thread.
+    debug_print("TCB: Exiting thread\n");
     TCB *old = running;
     old->setFinished(true);
     running = Scheduler::get();

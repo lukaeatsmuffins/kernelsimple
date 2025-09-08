@@ -18,8 +18,8 @@ static uint64 fibonacci(uint64 n) {
 static void workerBodyA(void* arg) {
     for (uint64 i = 0; i < 10; i++) {
         printString("A: i="); printInt(i); printString("\n");
-        for (uint64 j = 0; j < 10000; j++) {
-            for (uint64 k = 0; k < 30000; k++) { /* busy wait */ }
+        for (uint64 j = 0; j < 10; j++) {
+            for (uint64 k = 0; k < 30; k++) { /* busy wait */ }
             thread_dispatch();
         }
     }
@@ -30,8 +30,8 @@ static void workerBodyA(void* arg) {
 static void workerBodyB(void* arg) {
     for (uint64 i = 0; i < 16; i++) {
         printString("B: i="); printInt(i); printString("\n");
-        for (uint64 j = 0; j < 10000; j++) {
-            for (uint64 k = 0; k < 30000; k++) { /* busy wait */ }
+        for (uint64 j = 0; j < 10; j++) {
+            for (uint64 k = 0; k < 30; k++) { /* busy wait */ }
             thread_dispatch();
         }
     }
@@ -62,7 +62,7 @@ static void workerBodyC(void* arg) {
         printString("C: i="); printInt(i); printString("\n");
     }
 
-    printString("A finished!\n");
+    printString("C finished!\n");
     finishedC = true;
     thread_dispatch();
 }

@@ -3,9 +3,16 @@
 
 #include "../lib/hw.h"
 #include "../lib/console.h"
+#include "../h/print.hpp"
 #include "syscall_c.h"
 
 // TODO: Move _new.cpp to this file
+
+void body_exec (void* thread) {
+    debug_print("CPP API: Executing thread body\n");
+    // static_cast<Thread*>(thread)->run();
+    // debug_print("CPP API: Thread body executed\n");
+}
 
 class Thread {
     public:
@@ -22,10 +29,12 @@ class Thread {
         // TODO: Should we first initialize the thread without it starting?
         // The current implementation of TCB doesn't allow for this.
         // return myHandle->start();
-        if(thread_create(&myHandle, &Thread::body_exec, this) != 0) {
+        debug_print("CPP API: Starting thread\n");
+        if(thread_create(&myHandle, body_exec, this) != 0) {
             myHandle = nullptr;
             return -1;
         }
+        debug_print("CPP API: Thread started\n");
         return 0;
     }
     static void dispatch() {
@@ -44,9 +53,11 @@ class Thread {
 
     private:
 
-    static void body_exec (void* thread) {
-        static_cast<Thread*>(thread)->run();
-    }
+    // static void body_exec (void* thread) {
+    //     debug_print("CPP API: Executing thread body\n");
+    //     // static_cast<Thread*>(thread)->run();
+    //     // debug_print("CPP API: Thread body executed\n");
+    // }
 
     thread_t myHandle;
     void (*body)(void*);

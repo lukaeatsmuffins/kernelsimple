@@ -39,9 +39,9 @@ MemoryAllocator* MemoryAllocator::getInstance() {
 
 void* MemoryAllocator::mem_alloc (size_t size) {
 
-    debug_print("Allocating memory of size: ");
-    debug_print(size);
-    debug_print("\n");
+    // debug_print("Allocating memory of size: ");
+    // debug_print(size);
+    // debug_print("\n");
 
     // There is no free block, we cannot allocate more memory.
     if (this->free_block_ptr_ == nullptr) {
@@ -52,9 +52,9 @@ void* MemoryAllocator::mem_alloc (size_t size) {
     size = (size + BLOCK_INFO_HEADER_SIZE + MEM_BLOCK_SIZE - 1) 
            & ~(MEM_BLOCK_SIZE - 1);
 
-    debug_print("Aligned size: ");
-    debug_print(size);
-    debug_print("\n");
+    // debug_print("Aligned size: ");
+    // debug_print(size);
+    // debug_print("\n");
 
     BlockInfo* prev_free_block = nullptr, *free_block = free_block_ptr_;
 
@@ -95,18 +95,18 @@ void* MemoryAllocator::mem_alloc (size_t size) {
     // Update the size of the allocated block.
     free_block->size_ = size;
 
-    debug_print("Allocated block at address: ");
-    debug_print((uint64)free_block + BLOCK_INFO_HEADER_SIZE);
-    debug_print("\n");
+    // debug_print("Allocated block at address: ");
+    // debug_print((uint64)free_block + BLOCK_INFO_HEADER_SIZE);
+    // debug_print("\n");
 
     if ((uint64)free_block % MEM_BLOCK_SIZE != 0) {
-        debug_print("Allocated block address is not aligned to MEM_BLOCK_SIZE.\n");
-        debug_print("Allocated block address: ");
-        debug_print((uint64)free_block + BLOCK_INFO_HEADER_SIZE);
-        debug_print("\n");
-        debug_print("Free block address: ");
-        debug_print((uint64)free_block);
-        debug_print("\n");
+        // debug_print("Allocated block address is not aligned to MEM_BLOCK_SIZE.\n");
+        // debug_print("Allocated block address: ");
+        // debug_print((uint64)free_block + BLOCK_INFO_HEADER_SIZE);
+        // debug_print("\n");
+        // debug_print("Free block address: ");
+        // debug_print((uint64)free_block);
+        // debug_print("\n");
     }
 
     return (void*)((uint64)free_block + BLOCK_INFO_HEADER_SIZE);
@@ -114,9 +114,9 @@ void* MemoryAllocator::mem_alloc (size_t size) {
 
 int MemoryAllocator::mem_free (void* free_block_addr) {
 
-    debug_print("Freeing block at address: ");
-    debug_print((uint64)free_block_addr);
-    debug_print("\n");
+    // debug_print("Freeing block at address: ");
+    // debug_print((uint64)free_block_addr);
+    // debug_print("\n");
 
     // Check if the pointer is valid.
     if (!free_block_addr) {
@@ -152,23 +152,23 @@ int MemoryAllocator::mem_free (void* free_block_addr) {
     // If we didn't find a free block, we need to add the block to the free 
     // list.
 
-    debug_print("Prev free block: ");
-    debug_print((uint64)prev_free_block);
-    debug_print("\n");
+    // debug_print("Prev free block: ");
+    // debug_print((uint64)prev_free_block);
+    // debug_print("\n");
 
-    debug_print("Block info: ");
-    debug_print((uint64)block_info);
-    debug_print("\n");
+    // debug_print("Block info: ");
+    // debug_print((uint64)block_info);
+    // debug_print("\n");
 
-    debug_print("Next free block: ");
-    debug_print((uint64)next_free_block);
-    debug_print("\n");
+    // debug_print("Next free block: ");
+    // debug_print((uint64)next_free_block);
+    // debug_print("\n");
 
     if (!prev_free_block) {
-        debug_print("Block is the first free block.\n");
+        // debug_print("Block is the first free block.\n");
         free_block_ptr_ = block_info;
     } else {
-        debug_print("Block is not the first free block.\n");
+        // debug_print("Block is not the first free block.\n");
         prev_free_block->next_ = block_info;
     }
 
@@ -206,23 +206,23 @@ maybe_consolidate(BlockInfo* first_block, BlockInfo* second_block) {
 
     // If either block is null, we cannot consolidate them.
     if (!first_block || !second_block) {
-        debug_print("Cannot consolidate blocks, one of them is null.\n");
+        // debug_print("Cannot consolidate blocks, one of them is null.\n");
         return;
     }
     assert((uint64)first_block < (uint64)second_block, "First block address is not less than second block address.\n");
 
     if ((uint64)first_block + first_block->size_ != (uint64)second_block) {
-        debug_print("First block address: ");
-        debug_print((uint64)first_block);
-        debug_print("\n");
-        debug_print("First block size: ");
-        debug_print(first_block->size_);
-        debug_print("\n");
-        debug_print("Second block address: ");
-        debug_print((uint64)second_block);
-        debug_print("\n");
+        // debug_print("First block address: ");
+        // debug_print((uint64)first_block);
+        // debug_print("\n");
+        // debug_print("First block size: ");
+        // debug_print(first_block->size_);
+        // debug_print("\n");
+        // debug_print("Second block address: ");
+        // debug_print((uint64)second_block);
+        // debug_print("\n");
 
-        debug_print("Cannot consolidate blocks, they are not adjacent.\n");
+        // debug_print("Cannot consolidate blocks, they are not adjacent.\n");
         return;
     }
 

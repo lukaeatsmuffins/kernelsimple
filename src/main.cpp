@@ -12,6 +12,7 @@ void userMain();
 
 void userMainWrapper(void* arg)
 {
+    debug_print("Starting userMain\n");
     userMain();
 }
 
@@ -19,18 +20,33 @@ int main()
 {
     thread_t main_handle;
     thread_t userMain_handle;
-    thread_create(&main_handle, nullptr, nullptr);
-    thread_create(&userMain_handle, userMainWrapper, nullptr);
+
+    // We create threads directly through TCB because we do not yet have
+    // interrupts enabled.
+    debug_print("Creating main thread\n");
+    main_handle = TCB::createThread(nullptr, nullptr);
+    debug_print("Main thread handle: \n");
+    debug_print((uint64)main_handle);
+    debug_print("\n");
+
+    debug_print("Creating userMain thread\n");
+    userMain_handle = TCB::createThread(userMainWrapper, nullptr);
+    debug_print("UserMain thread handle: \n");
+    debug_print((uint64)userMain_handle);
+    debug_print("\n");
+
+    debug_print("Setting running to main thread\n");
     TCB::running = main_handle;
 
+    debug_print("Setting supervisor trap and enabling interrupts\n");
     Riscv::w_stvec((uint64) &Riscv::supervisorTrap);
     Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
 
-    while (userMain_handle) {
-        thread_dispatch();
+    while (!userMain_handle->isFinished()) {
+        // TCB::yield(); // This causes a lock???
     }
 
-    printString("Finished\n");
+    debug_print("Finished\n");
 
     return 0;
 }
