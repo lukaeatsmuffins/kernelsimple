@@ -76,6 +76,7 @@ class Semaphore {
     sem_t myHandle;
 };
 
+// TODO: Write a test for this.
 class PeriodicThread : public Thread {
     public:
     void terminate() {
@@ -99,8 +100,8 @@ class PeriodicThread : public Thread {
 
 class Console {
     public:
-    static char getc() { return __getc(); };
-    static void putc(char c) { __putc(c); };
+    static char getc() { return getc(); };
+    static void putc(char c) { putc(c); };
 };
 
 #endif // OS1_SYSCALL_CPP_HPP
