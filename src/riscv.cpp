@@ -4,7 +4,6 @@
 
 #include "../h/riscv.hpp"
 #include "../h/tcb.hpp"
-#include "../lib/console.h"
 #include "../h/syscall_c.h"
 #include "../h/mem.hpp"
 
@@ -12,6 +11,38 @@ void Riscv::popSppSpie()
 {
     __asm__ volatile("csrw sepc, ra");
     __asm__ volatile("sret");
+}
+
+void Riscv::consoleHandler()
+{
+    uint64 irq = plic_claim();
+    if (irq != CONSOLE_IRQ) {
+        debug_print("Unexpected IRQ: ");
+        debug_print(irq);
+        debug_print("\n");
+        plic_complete(irq);
+        return;
+    }
+
+    uintc8 c_stat = *CONSOLE_STATUS;
+    while (c_stat & CONSOLE_RX_STATUS_BIT) {
+        char c = *CONSOLE_RX_DATA;
+        Console::add_to_in(c);
+
+        c_stat = *CONSOLE_STATUS;
+    }
+
+    while (c_stat & CONSOLE_TX_STATUS_BIT) {
+        char c = Console::remove_from_out();
+        if (c == 0) {
+            break;
+        }
+        *CONSOLE_TX_DATA = c;
+        c_stat = *CONSOLE_STATUS;
+    }
+
+    // Write to output/input
+    plic_complete(irq);
 }
 
 void Riscv::handleSupervisorTrap()
@@ -112,10 +143,10 @@ void Riscv::handleSupervisorTrap()
             }
                 break;
             case SyscallCode::GETC:
-                res = __getc();
+                res = _getc();
                 break;
             case SyscallCode::PUTC:
-                __putc((char)a1);
+                _putc((char)a1);
                 break;
         }
         __asm__ volatile ("mv a0, %0" : : "r"(res));
@@ -145,7 +176,7 @@ void Riscv::handleSupervisorTrap()
     else if (scause == 0x8000000000000009UL)
     {
         // debug_print("Console handler called\n");
-        console_handler();
+        consoleHandler();
     }
     else
     {
