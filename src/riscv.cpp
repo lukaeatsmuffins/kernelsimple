@@ -6,6 +6,7 @@
 #include "../h/tcb.hpp"
 #include "../h/syscall_c.h"
 #include "../h/mem.hpp"
+#include "../h/_console.hpp"
 
 void Riscv::popSppSpie()
 {
@@ -15,6 +16,7 @@ void Riscv::popSppSpie()
 
 void Riscv::consoleHandler()
 {
+    // TODO: EOF HANDLING
     uint64 irq = plic_claim();
     if (irq != CONSOLE_IRQ) {
         debug_print("Unexpected IRQ: ");
@@ -24,21 +26,19 @@ void Riscv::consoleHandler()
         return;
     }
 
-    uintc8 c_stat = *CONSOLE_STATUS;
-    while (c_stat & CONSOLE_RX_STATUS_BIT) {
-        char c = *CONSOLE_RX_DATA;
-        Console::add_to_in(c);
-
-        c_stat = *CONSOLE_STATUS;
+    // This should not be blocking.
+    uint8 c_stat = *(uint8*)CONSOLE_STATUS;
+    while ((c_stat & CONSOLE_RX_STATUS_BIT) && _console::_can_input()) {
+        char c = *(uint8*)CONSOLE_RX_DATA;
+        _console::_add_to_in(c);
+        c_stat = *(uint8*)CONSOLE_STATUS;
     }
 
-    while (c_stat & CONSOLE_TX_STATUS_BIT) {
-        char c = Console::remove_from_out();
-        if (c == 0) {
-            break;
-        }
-        *CONSOLE_TX_DATA = c;
-        c_stat = *CONSOLE_STATUS;
+    // This should not be blocking.
+    while ((c_stat & CONSOLE_TX_STATUS_BIT) && _console::_can_output()) {
+        char c = _console::_remove_from_out();
+        *(uint8*)CONSOLE_TX_DATA = c;
+        c_stat = *(uint8*)CONSOLE_STATUS;
     }
 
     // Write to output/input
@@ -143,10 +143,10 @@ void Riscv::handleSupervisorTrap()
             }
                 break;
             case SyscallCode::GETC:
-                res = _getc();
+                res = _console::_getc();
                 break;
             case SyscallCode::PUTC:
-                _putc((char)a1);
+                _console::_putc((char)a1);
                 break;
         }
         __asm__ volatile ("mv a0, %0" : : "r"(res));
@@ -175,8 +175,8 @@ void Riscv::handleSupervisorTrap()
     }
     else if (scause == 0x8000000000000009UL)
     {
-        // debug_print("Console handler called\n");
-        consoleHandler();
+        debug_print("Console handler called\n");
+        Riscv::consoleHandler();
     }
     else
     {

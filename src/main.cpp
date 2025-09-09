@@ -8,23 +8,26 @@
 #include "../h/riscv.hpp"
 #include "../h/syscall_c.h"
 #include "../h/syscall_cpp.hpp"
+#include "../h/_console.hpp"
 
 void userMain();
 
 void userMainWrapper(void* arg)
 {
-    debug_print("Starting userMain\n");
-    userMain();
+    // debug_print("Starting userMain\n");
+    // userMain();
+    // putc('A');
+    return;
 }
-
-// void randomWrapper(void* arg) {
-//     debug_print("Starting random\n");
-// }
 
 int main()
 {
     thread_t main_handle;
-    thread_t userMain_handle;
+    // thread_t userMain_handle;
+
+    // Initialize console.
+    debug_print("Initializing console\n");
+    _console::_console_init();
 
     // We create threads directly through TCB because we do not yet have
     // interrupts enabled.
@@ -34,11 +37,11 @@ int main()
     debug_print((uint64)main_handle);
     debug_print("\n");
 
-    debug_print("Creating userMain thread\n");
-    userMain_handle = TCB::createThread(userMainWrapper, nullptr);
-    debug_print("UserMain thread handle: \n");
-    debug_print((uint64)userMain_handle);
-    debug_print("\n");
+    // debug_print("Creating userMain thread\n");
+    // userMain_handle = TCB::createThread(userMainWrapper, nullptr);
+    // debug_print("UserMain thread handle: \n");
+    // debug_print((uint64)userMain_handle);
+    // debug_print("\n");
 
     debug_print("Setting running to main thread\n");
     TCB::running = main_handle;
@@ -50,11 +53,11 @@ int main()
     // Thread randomThread(randomWrapper, nullptr);
     // randomThread.start();
 
-    while (!userMain_handle->isFinished()) {
+    // while (!userMain_handle->isFinished()) {
         // TCB::yield(); // This causes a lock???
-    }
+    // }
 
-    debug_print("Finished\n");
+    // debug_print("Finished\n");
 
     // TODO: Write exit.
     // Emulator RISC-V procesora je moguće zaustaviti izvršavanjem odgovarajućih

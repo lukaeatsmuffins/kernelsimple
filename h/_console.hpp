@@ -1,81 +1,51 @@
 #ifndef _CONSOLE_HPP
 #define _CONSOLE_HPP
 
-#include "semaphore.hpp"
-#include "list.hpp"
-const int EOF = -1; 
+#include "circular_buffer.hpp"
+#include "print.hpp"
 
-class _console () {
+class _console {
     public:
-    static int _getc() {
-        wait(mutex_in_);
-        char* data_ptr = buffer_in_.removeFirst();
-        if (!data_ptr) {
-            return EOF;
-        }
-        char ret = *data_ptr;
-        delete data_ptr;
-        return static_cast<int>(ret);
+    static void _console_init() {
+        debug_print("Creating buffers\n");
+        buffer_in_ = CircularBuffer<char>::createInstance(size_);
+        buffer_out_ = CircularBuffer<char>::createInstance(size_);
+        debug_print("Buffers created\n");
+    }
+    static void _console_destroy() {
+        delete buffer_in_;
+        delete buffer_out_;
+    }
+
+    static char _getc() {
+        return buffer_in_->removeFirst();
     }
 
     static void _putc(char c) {
-        wait(mutex_out_);
-        buffer_out_.addLast(new char(c));
+        buffer_out_->addLast(c);
     }
 
-    static void remove_from_out() {
-        char* ret = buffer_out_.removeFirst();
-        signal(mutex_out_);
+    static bool _can_output() {
+        return buffer_out_->getCnt() > 0;
+    }
+
+    static bool _can_input() {
+        return buffer_in_->getCnt() < size_;
+    }
+
+    static char _remove_from_out() {
+        char ret = buffer_out_->removeFirst();
         return ret;
     }
-    static void add_to_in(char c) {
-        buffer_in_.addLast(c);
-        signal(mutex_in_);
+    static void _add_to_in(char c) {
+        buffer_in_->addLast(c);
     }
 
     private:
-    static sem_t mutex_in_;
-    static sem_t mutex_out_;
-    static CircularBuffer buffer_in_;
-    static CircularBuffer buffer_out_;
+    static int size_;
+    static CircularBuffer<char> *buffer_in_;
+    static CircularBuffer<char> *buffer_out_;
 };
 
-template<typename T, int size = 16>
-class CircularBuffer {
-    public:
-    CircularBuffer() : first_idx_(0), last_idx_(0), full_(false) {}
-
-    T* removeFirst() {
-        if (first_idx_ == last_idx_ && !full_) {
-            return nullptr;
-        }
-        T* ret = buffer_[first_idx_];
-        first_idx_ = (first_idx_ + 1) % size;
-        full_ = false;
-        return ret;
-    }
-
-    T* addLast(T c) {
-        if (first_idx_ == last_idx_ && full_) {
-            return nullptr;
-        }
-        buffer_[last_idx_] = c;
-        last_idx_ = (last_idx_ + 1) % size;
-        if (last_idx_ == first_idx_) {
-            full_ = true;
-        }
-        return buffer_[last_idx_];
-    }
-
-    ~CircularBuffer() {}
-
-    private:
-    // First full element.
-    int first_idx_ = 0;
-    // Last free element.
-    int last_idx_ = 0;
-    T buffer_[size];
-    bool full_;
-};
 
 #endif

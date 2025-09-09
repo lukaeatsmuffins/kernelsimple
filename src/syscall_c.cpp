@@ -78,5 +78,6 @@ char getc () {
 }
 
 void putc (char c) {
+    debug_print("Syscall putc called\n");
     syscall(SyscallCode::PUTC, (uint64)c);
 }

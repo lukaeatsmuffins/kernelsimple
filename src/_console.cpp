@@ -1,10 +1,5 @@
 #include "../h/_console.hpp"
 
-char Console::_getc()
-{
-    return 0
-}
-
-void Console::_putc(char c)
-{
-}
+int _console::size_ = 16;
+CircularBuffer<char>* _console::buffer_in_ = nullptr;
+CircularBuffer<char>* _console::buffer_out_ = nullptr;
