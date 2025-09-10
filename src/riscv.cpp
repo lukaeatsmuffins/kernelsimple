@@ -6,6 +6,7 @@
 #include "../h/tcb.hpp"
 #include "../h/syscall_c.h"
 #include "../h/mem.hpp"
+#include "../h/_console.hpp"
 
 void Riscv::popSppSpie()
 {
@@ -27,13 +28,13 @@ void Riscv::consoleHandler()
     uintc8 c_stat = *CONSOLE_STATUS;
     while (c_stat & CONSOLE_RX_STATUS_BIT) {
         char c = *CONSOLE_RX_DATA;
-        Console::add_to_in(c);
+        _console::add_to_in(c);
 
         c_stat = *CONSOLE_STATUS;
     }
 
-    while (c_stat & CONSOLE_TX_STATUS_BIT) {
-        char c = Console::remove_from_out();
+    while ((c_stat & CONSOLE_TX_STATUS_BIT) && _console::_can_output()) {
+        char c = _console::_remove_from_out();
         if (c == 0) {
             break;
         }

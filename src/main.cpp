@@ -8,6 +8,7 @@
 #include "../h/riscv.hpp"
 #include "../h/syscall_c.h"
 #include "../h/syscall_cpp.hpp"
+#include "../h/_console.hpp"
 
 void userMain();
 
@@ -44,6 +45,7 @@ int main()
     TCB::running = main_handle;
 
     debug_print("Setting supervisor trap and enabling interrupts\n");
+    _console::init();
     Riscv::w_stvec((uint64) &Riscv::supervisorTrap);
     Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
 
