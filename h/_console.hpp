@@ -26,7 +26,8 @@ class _console {
     }
 
     static bool _can_output() {
-        return buffer_out_->getCnt() > 0;
+        auto ret = buffer_out_->getCnt();
+        return ret > 0;
     }
 
     static bool _can_input() {
@@ -40,6 +41,12 @@ class _console {
     static void _add_to_in(char c) {
         buffer_in_->addLast(c);
     }
+
+    // Handles getc requests.
+    static void handle_console_input();
+
+    // Handles putc requests.
+    static void handle_console_output();
 
     private:
     static int size_;

@@ -2,7 +2,7 @@ DIR_BUILD = build
 DIR_LIBS  = lib
 DIR_INC   = h
 
-DEBUG_FLAG = -D DEBUG_PRINT=1
+DEBUG_FLAG = -D DEBUG_PRINT=0
 
 KERNEL_IMG = kernel
 KERNEL_ASM = kernel.asm

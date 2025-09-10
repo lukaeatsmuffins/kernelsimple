@@ -12,12 +12,12 @@ uint64 syscall(SyscallCode code, uint64 a0 = 0, uint64 a1 = 0, uint64 a2 = 0, ui
 
 // TODO: Do this with number of blocks instead of size.
 void* mem_alloc (size_t size) {
-    debug_print("Syscall malloc called\n");
+    // debug_print("Syscall malloc called\n");
     return (void*)syscall(SyscallCode::MEM_ALLOC, (uint64)size);
 }
 
 int mem_free (void* ptr) {
-    debug_print("Syscall free called\n");
+    // debug_print("Syscall free called\n");
     return (int)syscall(SyscallCode::MEM_FREE, (uint64)ptr);
 }
 
@@ -36,6 +36,7 @@ int thread_create (thread_t* handle, void(*start_routine)(void*), void* arg) {
 }
 
 int thread_exit () {
+    // this never returns, changes context. is this intended?
     debug_print("Syscall thread exit called\n");
     return syscall(SyscallCode::THREAD_EXIT);
 }
@@ -78,6 +79,5 @@ char getc () {
 }
 
 void putc (char c) {
-    debug_print("Syscall putc called\n");
     syscall(SyscallCode::PUTC, (uint64)c);
 }

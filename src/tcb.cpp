@@ -29,12 +29,12 @@ void TCB::dispatch()
     }
 
     running = Scheduler::get();
-    // debug_print("Running thread: ");
-    // debug_print((uint64)running);
-    // debug_print("\n");
-    // debug_print("Old thread: ");
-    // debug_print((uint64)old);
-    // debug_print("\n");
+    debug_print("Running thread: ");
+    debug_print((uint64)running);
+    debug_print("\n");
+    debug_print("Old thread: ");
+    debug_print((uint64)old);
+    debug_print("\n");
 
     TCB::contextSwitch(&old->context, &running->context);
 }

@@ -1,17 +1,22 @@
 #include "../h/print.hpp"
 #include "../h/riscv.hpp"
+#include "../h/syscall_c.h"
 #include "../lib/console.h"
 
 
 void debug_print(uint64 integer) {
     #if DEBUG_PRINT == 1
+    // debug_print_internal_string("\n---------------------DEBUG_PRINT-----------------------\n");
     debug_print_internal_int(integer);
+    // debug_print_internal_string("\n---------------------DEBUG_PRINT-----------------------\n");
     #endif
 }
 
 void debug_print(char const *string) {
     #if DEBUG_PRINT == 1
+    // debug_print_internal_string("\n---------------------DEBUG_PRINT-----------------------\n");
     debug_print_internal_string(string);
+    // debug_print_internal_string("\n---------------------DEBUG_PRINT-----------------------\n");
     #endif
 }
 

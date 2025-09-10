@@ -7,42 +7,12 @@
 #include "../h/syscall_c.h"
 #include "../h/mem.hpp"
 #include "../h/_console.hpp"
+// #include "../lib/console.h"
 
 void Riscv::popSppSpie()
 {
     __asm__ volatile("csrw sepc, ra");
     __asm__ volatile("sret");
-}
-
-void Riscv::consoleHandler()
-{
-    // TODO: EOF HANDLING
-    uint64 irq = plic_claim();
-    if (irq != CONSOLE_IRQ) {
-        debug_print("Unexpected IRQ: ");
-        debug_print(irq);
-        debug_print("\n");
-        plic_complete(irq);
-        return;
-    }
-
-    // This should not be blocking.
-    uint8 c_stat = *(uint8*)CONSOLE_STATUS;
-    while ((c_stat & CONSOLE_RX_STATUS_BIT) && _console::_can_input()) {
-        char c = *(uint8*)CONSOLE_RX_DATA;
-        _console::_add_to_in(c);
-        c_stat = *(uint8*)CONSOLE_STATUS;
-    }
-
-    // This should not be blocking.
-    while ((c_stat & CONSOLE_TX_STATUS_BIT) && _console::_can_output()) {
-        char c = _console::_remove_from_out();
-        *(uint8*)CONSOLE_TX_DATA = c;
-        c_stat = *(uint8*)CONSOLE_STATUS;
-    }
-
-    // Write to output/input
-    plic_complete(irq);
 }
 
 void Riscv::handleSupervisorTrap()
@@ -160,8 +130,12 @@ void Riscv::handleSupervisorTrap()
     else if (scause == 0x8000000000000001UL)
     {
         // interrupt: yes; cause code: supervisor software interrupt (CLINT; machine timer interrupt)
+        debug_print("TIMER INTERRUPT");
         mc_sip(SIP_SSIP);
         TCB::timeSliceCounter++;
+
+        _console::handle_console_output();
+
         Scheduler::maybeWakeThreads();
         if (TCB::timeSliceCounter >= TCB::running->getTimeSlice())
         {
@@ -175,8 +149,7 @@ void Riscv::handleSupervisorTrap()
     }
     else if (scause == 0x8000000000000009UL)
     {
-        debug_print("Console handler called\n");
-        Riscv::consoleHandler();
+        _console::handle_console_input();
     }
     else
     {

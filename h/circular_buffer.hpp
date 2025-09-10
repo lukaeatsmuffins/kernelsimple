@@ -28,34 +28,35 @@ class CircularBuffer {
     }
 
     ~CircularBuffer() {
-        sem_close(item_);
-        sem_close(space_);
-        sem_close(mutex_);
+        item_->close();
+        space_->close();
+        mutex_->close();
     }
 
     T removeFirst() {
-        sem_wait(item_);
-        sem_wait(mutex_);
+        item_->wait();
+        mutex_->wait();
         T ret = buffer_[first_idx_];
         first_idx_ = (first_idx_ + 1) % size_;
-        sem_signal(mutex_);
-        sem_signal(space_);
+        mutex_->signal();
+        space_->signal();
         return ret;
     }
 
     T addLast(T c) {
-        sem_wait(space_);
-        sem_wait(mutex_);
+        space_->wait();
+        mutex_->wait();
+        T ret = buffer_[last_idx_];
         buffer_[last_idx_] = c;
         last_idx_ = (last_idx_ + 1) % size_;
-        sem_signal(mutex_);
-        sem_signal(item_);
-        return buffer_[last_idx_];
+        mutex_->signal();
+        item_->signal();
+        return ret;
     }
 
     int getCnt() {
         int ret = 0;
-        sem_wait(mutex_);
+        mutex_->wait();
 
         if (last_idx_ >= first_idx_) {
             ret = last_idx_ - first_idx_;
@@ -63,7 +64,7 @@ class CircularBuffer {
             ret = size_ - first_idx_ + last_idx_;
         }
 
-        sem_signal(mutex_);
+        mutex_->signal();
         return ret;
     }
 
