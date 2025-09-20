@@ -58,7 +58,7 @@ void main()
     // // randomThread.start();
 
     while (!userMain_handle->isFinished()) {
-        // thread_dispatch();
+        thread_dispatch();
     }
     Riscv::mc_sstatus(Riscv::SSTATUS_SIE);
     debug_print("Exiting main\n");
