@@ -7,7 +7,6 @@
 #include "../h/syscall_c.h"
 #include "../h/mem.hpp"
 #include "../h/_console.hpp"
-// #include "../lib/console.h"
 
 void Riscv::popSppSpie()
 {
@@ -53,15 +52,6 @@ void Riscv::handleSupervisorTrap()
             case SyscallCode::THREAD_CREATE: {
                 thread_t* handle = (thread_t*)a1;
                 *handle = (thread_t)TCB::createThread((void(*)(void*))a2, (void*)a3);
-                // debug_print("Thread created with handle: ");
-                // debug_print((uint64)*handle);
-                // debug_print("\n");
-                // debug_print("Thread body: ");
-                // debug_print((uint64)a2);
-                // debug_print("\n");
-                // debug_print("Thread arg: ");
-                // debug_print((uint64)a3);
-                // debug_print("\n");
                 if (!(*handle))
                     res = -1;
                 }
@@ -81,12 +71,6 @@ void Riscv::handleSupervisorTrap()
                 *handle = (sem_t)_semaphore::open(a2);
                 if (!(*handle))
                     res = -1;
-                debug_print("Semaphore open: Handle: ");
-                debug_print((uint64)*handle);
-                debug_print("\n");
-                debug_print("On handle addr: ");
-                debug_print((uint64)handle);
-                debug_print("\n");
                 }
                 break;
             case SyscallCode::SEM_CLOSE: {
@@ -118,6 +102,15 @@ void Riscv::handleSupervisorTrap()
             case SyscallCode::PUTC:
                 _console::_putc((char)a1);
                 break;
+            case SyscallCode::GET_THREAD_ID:
+                res = TCB::getThreadId();
+                break;
+            case SyscallCode::THREAD_JOIN: {
+                thread_t* handle = (thread_t*)a1;
+                time_t time = (time_t)a2;
+                TCB::running->join(*handle, time);
+            }
+                break;
         }
         __asm__ volatile ("mv a0, %0" : : "r"(res));
 
@@ -130,13 +123,13 @@ void Riscv::handleSupervisorTrap()
     else if (scause == 0x8000000000000001UL)
     {
         // interrupt: yes; cause code: supervisor software interrupt (CLINT; machine timer interrupt)
-        debug_print("TIMER INTERRUPT");
         mc_sip(SIP_SSIP);
         TCB::timeSliceCounter++;
 
         _console::handle_console_output();
 
         Scheduler::maybeWakeThreads();
+        Scheduler::maybeReleaseJoiningThreads();
         if (TCB::timeSliceCounter >= TCB::running->getTimeSlice())
         {
             uint64 volatile sepc = r_sepc();

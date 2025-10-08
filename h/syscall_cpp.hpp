@@ -2,7 +2,6 @@
 #define OS1_SYSCALL_CPP_HPP 
 
 #include "../lib/hw.h"
-#include "../lib/console.h"
 #include "../h/print.hpp"
 #include "syscall_c.h"
 

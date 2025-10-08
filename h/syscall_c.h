@@ -27,6 +27,8 @@ enum SyscallCode {
     TIME_SLEEP = 0x31,
     GETC = 0x41,
     PUTC = 0x42,
+    GET_THREAD_ID = 0x43,
+    THREAD_JOIN = 0x44,
 };
 
 void* mem_alloc (size_t size);
@@ -56,5 +58,9 @@ int time_sleep (time_t);
 char getc ();
 
 void putc (char);
+
+int getThreadId();
+
+void thread_join(thread_t* handle, time_t time);
 
 #endif // OS1_SYSCALL_C_H

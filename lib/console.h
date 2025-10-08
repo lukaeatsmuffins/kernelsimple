@@ -4,7 +4,7 @@
 extern "C" {
 #endif
 
-    void __putc(char chr);
+    void consputc(char chr);
 
     char __getc();
 

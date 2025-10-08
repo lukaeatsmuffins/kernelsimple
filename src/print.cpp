@@ -34,7 +34,7 @@ void debug_print_internal_string(char const *string)
     Riscv::mc_sstatus(Riscv::SSTATUS_SIE);
     while (*string != '\0')
     {
-        putc(*string);
+        consputc(*string);
         string++;
     }
     Riscv::ms_sstatus(sstatus & Riscv::SSTATUS_SIE ? Riscv::SSTATUS_SIE : 0);
@@ -67,6 +67,6 @@ void debug_print_internal_int(uint64 integer)
     if (neg)
         buf[i++] = '-';
 
-    while (--i >= 0) { putc(buf[i]); }
+    while (--i >= 0) { consputc(buf[i]); }
     Riscv::ms_sstatus(sstatus & Riscv::SSTATUS_SIE ? Riscv::SSTATUS_SIE : 0);
 }

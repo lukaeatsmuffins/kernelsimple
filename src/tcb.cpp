@@ -7,6 +7,8 @@ TCB *TCB::running = nullptr;
 
 uint64 TCB::timeSliceCounter = 0;
 
+int TCB::lastThreadId = -1;
+
 TCB *TCB::createThread(Body body, void* arg)
 {
     debug_print("TCB: Creating TCB\n");
@@ -29,13 +31,6 @@ void TCB::dispatch()
     }
 
     running = Scheduler::get();
-    debug_print("Running thread: ");
-    debug_print((uint64)running);
-    debug_print("\n");
-    debug_print("Old thread: ");
-    debug_print((uint64)old);
-    debug_print("\n");
-
     TCB::contextSwitch(&old->context, &running->context);
 }
 
@@ -52,7 +47,9 @@ void TCB::threadWrapper()
     debug_print((uint64)running->arg_);
     debug_print("\n");
     
+    sem_wait()
     running->body(running->arg_);
+    sem_signal()
     thread_exit();
 }
 
@@ -64,4 +61,27 @@ void TCB::exit() {
     running = Scheduler::get();
     assert(running != nullptr, "Scheduler should return at least one thread");
     TCB::contextSwitch(&old->context, &running->context);
+}
+
+void TCB::join(thread_t handle, time_t time) {
+    joined_ = true;
+    if (time) {
+        debug_print("TCB: Joining thread in scheduler\n");
+        Scheduler::join(time);
+    }
+    while(handle && !handle->isFinished() && joined_) {
+        debug_print("TCB: YIELDING\n");
+        yield();
+    }
+    if (!handle->isFinished()) {
+        debug_print("TCB: HANDLE IS NOT FINISHED\n");
+    }
+    if (!joined_) {
+        debug_print("TCB: JOINED IS NOT TRUE\n");
+    }
+    if (handle) {
+        debug_print("TCB: HANDLE IS NOT NULL\n");
+    }
+    debug_print("TCB: LEAVING\n");
+    joined_ = false;
 }

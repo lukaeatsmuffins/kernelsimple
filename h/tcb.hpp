@@ -22,6 +22,8 @@ public:
 
     void unblock() { blocked_ = false; }
 
+    void unjoin() { joined_ = false; }
+
     bool isBlocked() { return blocked_; }
 
     void setSleeping(bool value) { sleeping_ = value; }
@@ -39,6 +41,10 @@ public:
 
     static TCB *running;
 
+    static int getThreadId() { return running->tid_; }
+
+    void join(thread_t handle, time_t time);
+
 private:
     TCB(Body body, void* arg, uint64 timeSlice) :
             body(body),
@@ -48,9 +54,11 @@ private:
                      stack != nullptr ? (uint64) &stack[STACK_SIZE] : 0
                     }),
             timeSlice(timeSlice),
+            tid_(++TCB::lastThreadId),
             finished_(false),
             blocked_(false),
-            sleeping_(false)
+            sleeping_(false),
+            joined_(false)
     {
         if (body != nullptr) { Scheduler::put(this); }
     }
@@ -66,6 +74,7 @@ private:
     uint64 *stack;
     Context context;
     uint64 timeSlice;
+    int tid_;
     bool finished_;
     bool blocked_;
     bool sleeping_;
@@ -86,6 +95,10 @@ private:
 
     static uint64 constexpr STACK_SIZE = 1024;
     static uint64 constexpr TIME_SLICE = 2;
+
+    bool joined_;
+
+    static int lastThreadId;
 };
 
 #endif //OS1_VEZBE07_RISCV_CONTEXT_SWITCH_2_INTERRUPT_TCB_HPP

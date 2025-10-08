@@ -4,7 +4,10 @@
 #include "../h/syscall_c.h"
 
 void Thread::body_exec(void* thread) {
+    debug_print("Thread body exec\n");
+    // this weird
     static_cast<Thread*>(thread)->run();
+    debug_print("Thread body exec done\n");
 }
 
 

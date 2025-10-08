@@ -1,5 +1,4 @@
 #include "../h/syscall_c.h"
-#include "../lib/console.h"
 #include "../h/print.hpp"
 
 
@@ -80,4 +79,12 @@ char getc () {
 
 void putc (char c) {
     syscall(SyscallCode::PUTC, (uint64)c);
+}
+
+int getThreadId() {
+    return syscall(SyscallCode::GET_THREAD_ID);
+}
+
+void thread_join(thread_t* handle, time_t time) {
+    syscall(SyscallCode::THREAD_JOIN, (uint64)handle, (uint64)time);
 }

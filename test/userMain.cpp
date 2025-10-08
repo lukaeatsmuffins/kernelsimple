@@ -1,4 +1,5 @@
 #include "printing.hpp"
+#include "get_tid_test.hpp"
 
 #define LEVEL_1_IMPLEMENTED 0
 #define LEVEL_2_IMPLEMENTED 1
@@ -31,7 +32,7 @@
 #endif
 
 void userMain() {
-    printString("Unesite broj testa? [1-7]\n");
+    printString("Unesite broj testa? [1-9]\n");
     int test = getc() - '0';
     getc(); // Enter posle broja
 
@@ -99,6 +100,10 @@ void userMain() {
             printString("Test se nije uspesno zavrsio\n");
             printString("TEST 7 (zadatak 2., testiranje da li se korisnicki kod izvrsava u korisnickom rezimu)\n");
 #endif
+            break;
+        case 8:
+            getThreadIdTest();
+            printString("TEST 8 (getThreadId test)\n");
             break;
         default:
             printString("Niste uneli odgovarajuci broj za test\n");

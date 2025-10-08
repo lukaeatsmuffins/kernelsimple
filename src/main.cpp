@@ -18,9 +18,13 @@ void exit() {
 
 void userMain();
 
+void test();
+
 void userMainWrapper(void* arg)
 {
-    userMain();
+    test();
+    printString("==============================\n");
+    // userMain();
     return;
 }
 
@@ -68,3 +72,46 @@ void main()
     }
     exit();
 }
+
+
+class pt : public PeriodicThread {
+    public:
+    pt(char c) : PeriodicThread(5), c(c) {}
+    void periodicActivation() {
+        Console::putc(c);
+        Console::putc('\n');
+    }
+    private:
+    char c;
+};
+
+
+void workerBodyA(void* arg) {
+    for (int i = 0; i < 10; i++) {
+        time_sleep(5);
+        printString("A: i=");
+        printInt(i);
+        printString("\n");
+    }
+}
+
+void workerBodyB(void* arg) {
+    for (int i = 0; i < 16; i++) {
+        time_sleep(5);
+        printString("B: i=");
+        printInt(i);
+        printString("\n");
+    }
+}
+
+void test() { 
+    thread_t a;
+    thread_t b;
+
+    thread_create(&a, workerBodyA, nullptr);
+    thread_join(&a, 0);
+
+    thread_create(&b, workerBodyB, nullptr);
+    thread_join(&b, 0);
+}
+
